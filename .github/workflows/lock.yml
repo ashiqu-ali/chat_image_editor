@@ -1,0 +1,27 @@
+name: Lock closed threads
+
+# Locks closed issues and PRs after 30 quiet days, so new reports go into new
+# issues with up-to-date details instead of old threads.
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  lock:
+    if: github.repository == 'ashiqu-ali/chat_image_editor'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dessant/lock-threads@89ae32b08ed1a541efecbab17912962a5e38981c # v6.0.2
+        with:
+          process-only: 'issues, prs'
+          issue-inactive-days: '30'
+          pr-inactive-days: '30'
+          issue-comment: >
+            This thread has been locked because it was closed with no activity
+            for 30 days. If you still see the problem, please open a new issue
+            with `flutter doctor -v` and a minimal reproduction.

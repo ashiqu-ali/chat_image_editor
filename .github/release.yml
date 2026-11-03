@@ -1,0 +1,28 @@
+# Groups automatically generated release notes by label.
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: Breaking changes
+      labels:
+        - breaking-change
+    - title: Editor engine
+      labels:
+        - 'p: core'
+    - title: UI and theming
+      labels:
+        - 'p: ui'
+        - 'p: theming'
+    - title: Performance
+      labels:
+        - 'a: performance'
+    - title: Documentation
+      labels:
+        - docs
+    - title: Dependencies
+      labels:
+        - dependencies
+    - title: Other changes
+      labels:
+        - '*'

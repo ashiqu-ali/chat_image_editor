@@ -1,0 +1,38 @@
+name: Publish to pub.dev
+
+# Publishes when a version tag like v1.2.3 is pushed. Uses pub.dev's
+# automated publishing (GitHub OIDC), so no secrets are stored.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: github.repository == 'ashiqu-ali/chat_image_editor'
+    runs-on: ubuntu-latest
+    environment: pub.dev
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+      - id: sdk
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.sdk.outputs.version }}
+          channel: stable
+      - run: flutter pub get
+      - name: Tag must match the pubspec version
+        run: |
+          version=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match pubspec version $version"
+            exit 1
+          fi
+      - run: flutter pub publish --force

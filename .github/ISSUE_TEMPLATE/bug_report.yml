@@ -1,0 +1,48 @@
+name: Bug report
+description: Something doesn't work as expected.
+labels: [bug, triage]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: A minimal code sample or the steps in the example app.
+      placeholder: |
+        1. Open the editor with ...
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: package-version
+    attributes:
+      label: chat_image_editor version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: flutter-doctor
+    attributes:
+      label: flutter doctor -v
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and device
+      placeholder: Android 15, Pixel 8 / iOS 18, iPhone 15 / Chrome 130
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      render: shell

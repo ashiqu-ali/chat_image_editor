@@ -1,0 +1,38 @@
+name: No response
+
+# Closes issues and PRs labeled "waiting for response" when the author
+# doesn't reply. Replying removes the label and stops the clock.
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  no-response:
+    if: github.repository == 'ashiqu-ali/chat_image_editor'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
+        with:
+          only-labels: waiting for response
+          labels-to-remove-when-unstale: waiting for response
+          stale-issue-label: no response
+          stale-pr-label: no response
+          days-before-stale: 14
+          days-before-close: 7
+          stale-issue-message: >
+            We asked for more information two weeks ago and haven't heard back.
+            This issue will close in 7 days unless there's a reply.
+          close-issue-message: >
+            Closing because we didn't get the information we needed. If you can
+            still reproduce this, please open a new issue with the details.
+          stale-pr-message: >
+            This PR is waiting for changes from its author. It will close in
+            7 days unless there's an update.
+          close-pr-message: >
+            Closing because there was no update. Feel free to reopen when you
+            pick it back up.

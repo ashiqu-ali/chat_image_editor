@@ -1,0 +1,61 @@
+name: PR checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  title:
+    name: Conventional title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            docs
+            test
+            build
+            ci
+            chore
+            revert
+
+  tree-hygiene:
+    name: Tests and CHANGELOG
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require tests and a CHANGELOG entry for library changes
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          TEST_EXEMPT: ${{ contains(github.event.pull_request.labels.*.name, 'test-exempt') }}
+          CHANGELOG_EXEMPT: ${{ contains(github.event.pull_request.labels.*.name, 'changelog-exempt') }}
+        run: |
+          changed=$(git diff --name-only "$BASE"..."$HEAD")
+          printf 'Changed files:\n%s\n' "$changed"
+          lib=$(printf '%s\n' "$changed" | grep -E '^lib/' || true)
+          tests=$(printf '%s\n' "$changed" | grep -E '^(test|benchmark)/' || true)
+          changelog=$(printf '%s\n' "$changed" | grep -Fx 'CHANGELOG.md' || true)
+          status=0
+          if [ -n "$lib" ] && [ -z "$tests" ] && [ "$TEST_EXEMPT" != "true" ]; then
+            echo "::error::This PR changes lib/ without changing tests. Add tests, or explain in the PR why it's exempt so a maintainer can add the test-exempt label."
+            status=1
+          fi
+          if [ -n "$lib" ] && [ -z "$changelog" ] && [ "$CHANGELOG_EXEMPT" != "true" ]; then
+            echo "::error::This PR changes lib/ without a CHANGELOG.md entry. Add one under Unreleased, or explain why it's not needed so a maintainer can add the changelog-exempt label."
+            status=1
+          fi
+          exit $status

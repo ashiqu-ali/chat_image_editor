@@ -1,0 +1,59 @@
+# Labels pull requests by the files they touch.
+# See https://github.com/actions/labeler for the format.
+
+'p: core':
+  - changed-files:
+      - any-glob-to-any-file:
+          - lib/src/core/**
+          - lib/src/controller/**
+
+'p: ui':
+  - changed-files:
+      - any-glob-to-any-file:
+          - lib/src/ui/**
+
+'p: theming':
+  - changed-files:
+      - any-glob-to-any-file:
+          - lib/src/theme/**
+
+'a: api':
+  - changed-files:
+      - any-glob-to-any-file:
+          - lib/chat_image_editor.dart
+          - lib/src/models/**
+          - lib/src/config/**
+
+'a: performance':
+  - changed-files:
+      - any-glob-to-any-file:
+          - benchmark/**
+          - example/integration_test/**
+          - tool/benchmark_*
+
+'a: tests':
+  - changed-files:
+      - any-glob-to-any-file:
+          - test/**
+
+example:
+  - changed-files:
+      - any-glob-to-any-file:
+          - example/**
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - docs/**
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - pubspec.yaml
+          - example/pubspec.yaml

@@ -1,0 +1,60 @@
+name: Performance problem
+description: Slow export, janky gestures, high memory use or large output files.
+labels: ['a: performance', triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please measure in **profile mode** (`flutter run --profile`); debug mode is much slower.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem?
+      options:
+        - Slow export or size estimate
+        - Janky drawing, dragging or zooming
+        - High memory use or crash on large images
+        - Output file larger than expected
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What did you measure?
+      description: Timings, frame times, memory or file sizes, and how you measured them.
+    validations:
+      required: true
+  - type: textarea
+    id: image
+    attributes:
+      label: Source image
+      description: Resolution, format and file size of the image (attach it if you can).
+      placeholder: 4032x3024 JPEG, 3.1 MB
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Editor configuration
+      description: Your ExportOptions and ChatImageEditorConfig, if not the defaults.
+      render: dart
+  - type: input
+    id: device
+    attributes:
+      label: Device and platform
+      placeholder: Pixel 6a, Android 15 / iPhone 12, iOS 18
+    validations:
+      required: true
+  - type: input
+    id: package-version
+    attributes:
+      label: chat_image_editor version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: flutter-doctor
+    attributes:
+      label: flutter doctor -v
+      render: shell
