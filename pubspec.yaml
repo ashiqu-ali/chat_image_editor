@@ -1,0 +1,29 @@
+name: chat_image_editor
+description: >-
+  A lightweight, WhatsApp-style image editor for chat apps: draw, add text,
+  crop, rotate, compress and send with a caption. Pure Dart, fully themeable.
+version: 0.1.0
+repository: https://github.com/ashiqu-ali/chat_image_editor
+issue_tracker: https://github.com/ashiqu-ali/chat_image_editor/issues
+topics:
+  - image-editor
+  - image
+  - crop
+  - drawing
+  - chat
+
+environment:
+  sdk: ^3.8.0
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image: ^4.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:

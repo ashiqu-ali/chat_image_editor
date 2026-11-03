@@ -1,0 +1,11 @@
+# Keep the published package lean: contributor and tooling files only.
+.claude/
+.github/
+.fvm/
+.fvmrc
+CLAUDE.md
+CLAUDE.local.md
+docs/AGENTS.md
+example/build/
+build/
+coverage/
