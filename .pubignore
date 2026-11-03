@@ -1,0 +1,9 @@
+# Keep the published package lean: only the library, tests, example and docs.
+# (A .pubignore replaces .gitignore for publishing, so build output is listed too.)
+/.*
+/benchmark/
+/tool/
+build/
+coverage/
+example/build/
+doc/api/
