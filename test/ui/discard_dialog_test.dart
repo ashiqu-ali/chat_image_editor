@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:chat_image_editor/chat_image_editor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'editor_test_utils.dart';
@@ -41,6 +44,24 @@ Color? materialButtonColor(WidgetTester tester, String label) {
     find.widgetWithText(TextButton, label),
   );
   return button.style?.foregroundColor?.resolve(<WidgetState>{});
+}
+
+/// Color the text [label] is actually painted with.
+Color textColor(WidgetTester tester, String label) {
+  final paragraph = tester.renderObject<RenderParagraph>(find.text(label));
+  return paragraph.text.style!.color!;
+}
+
+/// WCAG contrast ratio between [a] and [b], from 1 to 21.
+double contrastRatio(Color a, Color b) {
+  final la = a.computeLuminance();
+  final lb = b.computeLuminance();
+  return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+}
+
+/// The dark scheme the dialogs derive their accents from on a dark sheet.
+ColorScheme darkSchemeFor(Color primary) {
+  return ColorScheme.fromSeed(seedColor: primary, brightness: Brightness.dark);
 }
 
 void main() {
@@ -181,16 +202,12 @@ void main() {
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.byType(CupertinoAlertDialog), findsNothing);
 
-      final dialogContext = tester.element(find.byType(AlertDialog));
-      expect(
-        materialButtonColor(tester, 'Discard'),
-        Theme.of(dialogContext).colorScheme.error,
-      );
+      // The default sheet is dark, so the accents come from a dark scheme
+      // seeded with the editor's primary color.
       final scope = scopeOf(tester, find.byTooltip('Close'));
-      expect(
-        materialButtonColor(tester, 'Keep editing'),
-        scope.theme.primaryColor,
-      );
+      final darkScheme = darkSchemeFor(scope.theme.primaryColor);
+      expect(materialButtonColor(tester, 'Discard'), darkScheme.error);
+      expect(materialButtonColor(tester, 'Keep editing'), darkScheme.primary);
       // The safe choice comes first, the destructive one last.
       expect(
         tester.getCenter(find.text('Keep editing')).dx,
@@ -222,15 +239,68 @@ void main() {
       expect(cancelled, 0);
     });
 
-    testWidgets('uses themed colors and custom strings', (tester) async {
+    testWidgets('keeps both actions readable on the default sheet', (
+      tester,
+    ) async {
+      await pumpReadyEditor(tester, appTheme: ThemeData());
+
+      await closeWithCaption(tester);
+
+      final appTheme = Theme.of(tester.element(find.byType(AlertDialog)));
+      expect(appTheme.useMaterial3, isTrue);
+      expect(appTheme.brightness, Brightness.light);
+      final sheet = scopeOf(
+        tester,
+        find.byTooltip('Close'),
+      ).theme.sheetBackgroundColor;
+      // The light app's own error color would be too dim here.
+      expect(contrastRatio(appTheme.colorScheme.error, sheet), lessThan(4.5));
+
+      expect(
+        contrastRatio(textColor(tester, 'Keep editing'), sheet),
+        greaterThanOrEqualTo(4.5),
+      );
+      expect(
+        contrastRatio(textColor(tester, 'Discard'), sheet),
+        greaterThanOrEqualTo(4.5),
+      );
+    });
+
+    testWidgets('derives the accents from the editor primary on a dark '
+        'sheet', (tester) async {
       await pumpReadyEditor(
         tester,
-        appTheme: ThemeData(
-          colorScheme: const ColorScheme.dark(error: Color(0xFFFF5252)),
-        ),
         theme: const ChatImageEditorThemeData(
           primaryColor: Color(0xFF00897B),
           sheetBackgroundColor: Color(0xFF222244),
+        ),
+      );
+
+      await closeWithCaption(tester);
+
+      final darkScheme = darkSchemeFor(const Color(0xFF00897B));
+      expect(textColor(tester, 'Keep editing'), darkScheme.primary);
+      expect(textColor(tester, 'Discard'), darkScheme.error);
+      for (final label in <String>['Keep editing', 'Discard']) {
+        expect(
+          contrastRatio(textColor(tester, label), const Color(0xFF222244)),
+          greaterThanOrEqualTo(4.5),
+        );
+      }
+    });
+
+    testWidgets('keeps the app colors on a light sheet, with custom strings', (
+      tester,
+    ) async {
+      await pumpReadyEditor(
+        tester,
+        appTheme: ThemeData(
+          colorScheme: const ColorScheme.light(error: Color(0xFFB00020)),
+        ),
+        theme: const ChatImageEditorThemeData(
+          primaryColor: Color(0xFF00695C),
+          sheetBackgroundColor: Color(0xFFF5F5F5),
+          sheetForegroundColor: Color(0xFF1E1E1E),
         ),
         strings: const ChatImageEditorStrings(
           discardTitle: 'Tout effacer ?',
@@ -247,9 +317,9 @@ void main() {
       expect(find.text('Effacer'), findsOneWidget);
       expect(find.text('Continuer'), findsOneWidget);
       final dialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
-      expect(dialog.backgroundColor, const Color(0xFF222244));
-      expect(materialButtonColor(tester, 'Effacer'), const Color(0xFFFF5252));
-      expect(materialButtonColor(tester, 'Continuer'), const Color(0xFF00897B));
+      expect(dialog.backgroundColor, const Color(0xFFF5F5F5));
+      expect(textColor(tester, 'Effacer'), const Color(0xFFB00020));
+      expect(textColor(tester, 'Continuer'), const Color(0xFF00695C));
     });
 
     testWidgets('follows the app theme platform over the device', (
@@ -335,7 +405,9 @@ void main() {
       expect(cancelled, 1);
     });
 
-    testWidgets('is dark over the default dark sheet', (tester) async {
+    testWidgets('is dark with a readable accent over the default sheet', (
+      tester,
+    ) async {
       await pumpReadyEditor(
         tester,
         appTheme: ThemeData(platform: TargetPlatform.iOS),
@@ -345,6 +417,13 @@ void main() {
 
       final context = tester.element(find.text('Keep editing'));
       expect(CupertinoTheme.brightnessOf(context), Brightness.dark);
+      final theme = scopeOf(tester, find.byTooltip('Close')).theme;
+      final keep = textColor(tester, 'Keep editing');
+      expect(keep, darkSchemeFor(theme.primaryColor).primary);
+      expect(
+        contrastRatio(keep, theme.sheetBackgroundColor),
+        greaterThanOrEqualTo(4.5),
+      );
     });
 
     testWidgets('uses themed colors and custom strings', (tester) async {
