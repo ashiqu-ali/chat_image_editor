@@ -103,16 +103,21 @@ class _ReadyView extends StatelessWidget {
 
     final topBar = scope.builders.topBar?.call(context, scope.controller);
 
+    // Every layer is keyed: layers come and go with the tool, and an
+    // unkeyed layer would be rebuilt from scratch in whichever slot it lands
+    // in, losing its state and skipping its exit animation.
     return AbsorbPointer(
       absorbing: state.exporting,
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          const EditorCanvas(),
-          if (tool == EditorTool.crop) const CropOverlay(),
+          const EditorCanvas(key: ValueKey<String>('canvas')),
+          if (tool == EditorTool.crop)
+            const CropOverlay(key: ValueKey<String>('crop-overlay')),
           // Stays mounted, like the caption bar, so it can fade out with the
           // rest of the draw chrome.
           _Fade(
+            key: const ValueKey<String>('color-picker'),
             visible: !state.drawing,
             child: _SlideFade(
               visible: showDrawToolbar,
@@ -123,6 +128,7 @@ class _ReadyView extends StatelessWidget {
           ),
           if (showTopBar)
             Positioned(
+              key: const ValueKey<String>('top-bar'),
               top: 0,
               left: 0,
               right: 0,
@@ -132,6 +138,7 @@ class _ReadyView extends StatelessWidget {
               ),
             ),
           Positioned(
+            key: const ValueKey<String>('bottom-chrome'),
             left: 0,
             right: 0,
             bottom: 0,
@@ -150,9 +157,11 @@ class _ReadyView extends StatelessWidget {
           ),
           // Above the bottom chrome, which may still be sliding out when
           // crop opens.
-          if (tool == EditorTool.crop) const CropControls(),
+          if (tool == EditorTool.crop)
+            const CropControls(key: ValueKey<String>('crop-controls')),
           if (state.gesture)
             Positioned(
+              key: const ValueKey<String>('delete-target'),
               left: 0,
               right: 0,
               bottom: safe.bottom + 32,
@@ -165,10 +174,14 @@ class _ReadyView extends StatelessWidget {
             ),
           if (editing)
             Positioned.fill(
+              key: const ValueKey<String>('text-entry'),
               child: TextEntryOverlay(key: ValueKey<String?>(state.editingId)),
             ),
           if (tool == EditorTool.compress)
-            const Positioned.fill(child: CompressSheet()),
+            const Positioned.fill(
+              key: ValueKey<String>('compress'),
+              child: CompressSheet(),
+            ),
         ],
       ),
     );
@@ -385,7 +398,7 @@ class _SlideFadeState extends State<_SlideFade> {
 
 /// Fades the chrome out of the way, for instance while a stroke is drawn.
 class _Fade extends StatelessWidget {
-  const _Fade({required this.visible, required this.child});
+  const _Fade({super.key, required this.visible, required this.child});
 
   final bool visible;
   final Widget child;

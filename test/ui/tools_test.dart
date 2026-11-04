@@ -1,4 +1,5 @@
 import 'package:chat_image_editor/chat_image_editor.dart';
+import 'package:chat_image_editor/src/ui/caption_bar.dart';
 import 'package:chat_image_editor/src/ui/color_strip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,5 +69,30 @@ void main() {
       await tester.pump();
       expect(controller.value.quarterTurns, 2);
     });
+
+    for (final tool in <String>['Text', 'Crop and rotate', 'Draw']) {
+      testWidgets('opening "$tool" slides the same caption bar out', (
+        tester,
+      ) async {
+        await pumpReadyEditor(tester);
+        final caption = find.byType(EditorBottomBar);
+        final before = tester.element(caption);
+
+        await tester.tap(find.byTooltip(tool));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // Still on screen, sliding out, and never rebuilt from scratch.
+        expect(caption, findsOneWidget);
+        expect(identical(tester.element(caption), before), isTrue);
+
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(caption, findsNothing);
+        final hidden = tester.element(
+          find.byType(EditorBottomBar, skipOffstage: false),
+        );
+        expect(identical(hidden, before), isTrue);
+      });
+    }
   });
 }
