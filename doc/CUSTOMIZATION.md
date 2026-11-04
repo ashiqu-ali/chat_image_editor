@@ -56,8 +56,11 @@ fades out so the photo stays in view. The bottom controls sit on a scrim
 
 ## Theme
 
-`ChatImageEditorThemeData` holds every color, text style and size the editor
-uses. Every field is optional.
+`ChatImageEditorThemeData` holds the editor's colors, text styles and sizes.
+Every field is optional. A few colors are fixed: drop shadows, the black or
+white icon on the pen-color swatch (picked for contrast with the pen color),
+the translucent text background (black, 50%) and the black or white text on
+a solid one.
 
 ### How a value is resolved
 
@@ -110,7 +113,7 @@ photos stand out. Only the accents follow your `ColorScheme`. Setting
 | `backgroundColor` | Editor background around the image. | Black |
 | `foregroundColor` | Icons and labels drawn over the editor background. | White |
 | `toolbarBackgroundColor` | Backdrop behind the editor's buttons, the **Done** pill, unselected aspect-ratio chips and the recipient chip, for contrast on bright photos. | Black, 54% |
-| `activeToolColor` | Icon color of the selected tool and shape, and the selected aspect-ratio chip. | `primaryColor` |
+| `activeToolColor` | Icon color of the selected tool and shape, the selected aspect-ratio chip, the crop confirm check, and the text background button while a background is on. | `primaryColor` |
 | `scrimColor` | Dim layer behind the text entry overlay, and the gradient under the bottom controls. | Black, 60% |
 | `cropFrameColor` | Crop frame border. | White |
 | `cropHandleColor` | Crop corner handles. | White |
@@ -128,7 +131,7 @@ photos stand out. Only the accents follow your `ColorScheme`. Setting
 | `sendButtonColor` | Send and done button background, and the compress sheet's **Apply** button. | `primaryColor` |
 | `sendButtonForegroundColor` | Send and done button icon, their busy spinner, and the **Apply** label. | `onPrimaryColor` |
 | `sendButtonDisabledColor` | Send button background while disabled. | Grey `#5C5C5C` |
-| `sheetBackgroundColor` | Background of bottom sheets, such as the compress sheet. | Near-black `#1E1E1E` |
+| `sheetBackgroundColor` | Background of bottom sheets, such as the compress sheet, and of the Material discard dialog. Its brightness decides whether the Cupertino discard alert is light or dark, and whether the dialogs' button colors come from a dark color scheme seeded with `primaryColor` (see [the discard dialog](#loading-error-and-discard)). | Near-black `#1E1E1E` |
 | `sheetForegroundColor` | Text and icons on bottom sheets. | White |
 | `defaultDrawColor` | First pen color, shown in the pen-color swatch. | `primaryColor` |
 | `defaultTextColor` | First color of the text tool. | White |
@@ -144,10 +147,10 @@ its own position.
 
 | Field | What it styles | Default |
 |---|---|---|
-| `labelStyle` | Small labels: aspect-ratio chips, the **Done** pill, the recipient chip and the **Apply** button. | `TextTheme.labelLarge` in `foregroundColor` |
+| `labelStyle` | Small labels: aspect-ratio chips, the **Done** pill, the recipient chip, the **Apply** button and the Material discard dialog's buttons. | `TextTheme.labelLarge` in `foregroundColor` |
 | `captionStyle` | Typed caption text. | `TextTheme.bodyLarge` in `captionTextColor` |
-| `sheetTitleStyle` | Bottom sheet titles. | `TextTheme.titleMedium` in `sheetForegroundColor` |
-| `sheetBodyStyle` | Bottom sheet body text. | `TextTheme.bodyMedium` in `sheetForegroundColor` |
+| `sheetTitleStyle` | Bottom sheet titles, and the Material discard dialog's title. | `TextTheme.titleMedium` in `sheetForegroundColor` |
+| `sheetBodyStyle` | Bottom sheet body text, and the Material discard dialog's message. | `TextTheme.bodyMedium` in `sheetForegroundColor` |
 | `textLayerStyle` | Base style of text drawn on the image: font family, weight, shadows. | Your app's body font, weight 600, line height 1.2 |
 
 A `labelStyle`, `captionStyle`, `sheetTitleStyle` or `sheetBodyStyle` you set
@@ -405,14 +408,14 @@ ChatImageEditor.open(
 | `controller` | `TextEditingController?` | `null` | Controls the caption text. When `null`, the editor owns one. |
 | `focusNode` | `FocusNode?` | `null` | Focus node for the field. |
 | `initialValue` | `String?` | `null` | Starting caption when no `controller` is given. Don't pass both. |
-| `decoration` | `InputDecoration?` | Rounded pill | Replaces the default decoration. If its `hintText` is `null`, `strings.captionHint` is used. |
+| `decoration` | `InputDecoration?` | Rounded pill | Replaces the default decoration. If it has neither a `hintText` nor a `hint`, `strings.captionHint` is used. |
 | `style` | `TextStyle?` | Theme `captionStyle` | Style of the typed text, merged onto the theme's `captionStyle`: it overrides only what it sets. |
 | `cursorColor` | `Color?` | Theme `primaryColor` | Cursor color. |
 | `minLines` | `int?` | `1` | Minimum visible lines. |
 | `maxLines` | `int?` | `5` | Maximum visible lines before the field scrolls. |
 | `maxLength` | `int?` | `null` | Maximum number of characters. `null` means no limit. |
 | `keyboardType` | `TextInputType` | `TextInputType.multiline` | Keyboard type. |
-| `textInputAction` | `TextInputAction` | `TextInputAction.newline` | Action button on the keyboard. |
+| `textInputAction` | `TextInputAction` | `TextInputAction.newline` | Action button on the keyboard. With `TextInputAction.send`, the keyboard's send button sends the image, just like the send button. |
 | `textCapitalization` | `TextCapitalization` | `TextCapitalization.sentences` | Automatic capitalization. |
 | `inputFormatters` | `List<TextInputFormatter>?` | `null` | Formatters applied while typing. |
 | `validator` | `FormFieldValidator<String>?` | `null` | Validates the caption. Sending is blocked while it returns an error. |
@@ -599,10 +602,26 @@ editor. It runs for the close button and for the system back gesture once no
 tool or text entry is open (back first closes those).
 
 The built-in dialog is platform-adaptive: a Cupertino alert on iOS and
-macOS, a Material dialog elsewhere. It uses `discardTitle`,
-`discardMessage`, `discardConfirm` and `keepEditing` from the strings, so
-most apps only need to translate those. Supply `confirmDiscard` when you want
-a different look, such as your app's own dialog or a bottom sheet.
+macOS, a Material dialog elsewhere. The platform comes from
+`Theme.of(context).platform`, not directly from the device, so a
+`ThemeData.platform` override in your app also picks the dialog. It uses
+`discardTitle`, `discardMessage`, `discardConfirm` and `keepEditing` from
+the strings, so most apps only need to translate those. Supply
+`confirmDiscard` when you want a different look, such as your app's own
+dialog or a bottom sheet.
+
+Its colors come from the editor theme:
+
+- The Material dialog uses `sheetBackgroundColor` for its background,
+  `sheetTitleStyle` and `sheetBodyStyle` for the title and message, and
+  `labelStyle` for its buttons.
+- The Cupertino alert is dark when `sheetBackgroundColor` is dark (the
+  default) and light otherwise. Its **Discard** action uses the system red.
+- On a dark `sheetBackgroundColor`, **Keep editing** (and the Material
+  dialog's **Discard**) take their colors from a dark color scheme seeded
+  with `primaryColor`, so they stay readable. On a light one, **Keep
+  editing** uses `primaryColor` and the Material **Discard** uses your app's
+  `ColorScheme.error`.
 
 ## Send button behaviour
 
@@ -621,7 +640,9 @@ typedef SendLongPressCallback =
 
 The callback gets an `export` function that renders the image on demand and
 returns the result, or `null` on failure. Return `true` to close the editor
-or `false` to stay. Handle the result inside the callback.
+or `false` to stay. Handle the result inside the callback: closing this way
+counts as a cancel, so `ChatImageEditor.open` completes with `null` and an
+embedded editor calls `onCancel`, not `onComplete`.
 
 ```dart
 final canSend = ValueNotifier<bool>(false); // Flip to true when ready.
@@ -670,7 +691,7 @@ text are not here; they live in the theme, icons and strings.
 | `enableZoom` | `true` | Allows pinch-to-zoom while no tool is open. |
 | `enableHaptics` | `true` | Light haptic feedback on alignment guides, color picks and the delete target. |
 | `showUndoRedo` | `true` | Shows undo and redo buttons in the top bar, and undo in the pen-mode bar. |
-| `hideSystemBarsWhileDrawing` | `false` | Opt-in. Hides the system status and navigation bars while the draw tool is open, so the whole screen is canvas; restores them when drawing ends or the editor closes. |
+| `hideSystemBarsWhileDrawing` | `false` | Opt-in. Hides the system status and navigation bars while the draw tool is open, and restores them when drawing ends or the editor closes. Works on iOS. On Android it uses `SystemUiMode.manual`, which Android ignores for apps that target API 36 or later (Flutter's default) and which needs the [edge-to-edge opt-out](https://docs.flutter.dev/release/breaking-changes/default-systemuimode-edge-to-edge) on API 35. |
 
 The tools are `EditorTool.draw`, `text`, `crop` and `compress`. The shapes
 are `ShapeType.freehand`, `line`, `rectangle`, `circle` and `arrow`.
@@ -849,6 +870,11 @@ The most useful members:
 
 A few things to know:
 
+- With your own controller, the editor's `config` decides which
+  configuration wins. Left at its default, the editor uses
+  `controller.config`, so you can configure the controller alone
+  (`ChatImageEditorController(config: …)`). Any other `config` passed to
+  the editor replaces `controller.config`.
 - Rotating, flipping and cropping happen in a crop session. Open it with
   `selectTool(EditorTool.crop)` and keep the changes with `confirmCrop()`.
   Leaving the crop tool any other way cancels the session. Called with no
@@ -881,7 +907,9 @@ ChatImageEditor(
 - `onComplete` is called with the result after a successful send or done.
   When `null`, the editor pops its route with the result.
 - `onCancel` is called when the user closes the editor, after any discard
-  confirmation. When `null`, the editor pops its route with `null`.
+  confirmation, and when `onSendLongPress` returns `true` (the callback
+  handled the result itself). When `null`, the editor pops its route with
+  `null`.
 
 The editor is designed to fill the screen. Give it the full size of the page
 for the best result.

@@ -21,8 +21,8 @@
 
 <p align="center">
   A <strong>WhatsApp-style image editor</strong> for chat apps: <strong>draw</strong>, add <strong>text</strong>, <strong>crop</strong>, <strong>rotate</strong>, <strong>compress</strong> and <strong>send with a caption</strong>.<br/>
-  Pure Dart, painted with <code>CustomPaint</code>. No platform code, no setup: it runs everywhere Flutter does.<br/>
-  Matches your app's <code>ColorScheme</code> out of the box, and every color, icon, string and UI region can be replaced.
+  Pure Dart: the photo and your edits are painted with <code>CustomPaint</code>, the controls are standard Flutter widgets. No platform code, no setup: it runs everywhere Flutter does.<br/>
+  Matches your app's <code>ColorScheme</code> out of the box, and its colors, icons, strings and UI regions can be replaced.
 </p>
 
 <p align="center">
@@ -110,16 +110,16 @@
 | Feature | What you get |
 |---|---|
 | Draw | Freehand pen, line, rectangle, circle and arrow, with a brush size slider. Colors come from a vertical gradient slider: drag along it to pick any color between your palette's stops. |
-| Pen mode | While drawing, the top bar morphs into a **Done** pill, undo and a swatch of the pen color, and the chrome fades out while a stroke is drawn. Opt in to `hideSystemBarsWhileDrawing` for a full-screen canvas. |
-| Text | Add, edit, move, pinch to resize and twist to rotate. Center alignment guides, solid or translucent backgrounds, drag to the bin to delete. |
-| Crop, rotate, flip | Draggable corners and edges, a rule-of-thirds grid, aspect-ratio presets, quarter turns and mirroring. Every crop tool sits in one bottom row. |
+| Pen mode | While drawing, the top bar morphs into a **Done** pill, undo and a swatch of the pen color, and the chrome fades out while a stroke is drawn. Opt in to `hideSystemBarsWhileDrawing` to hide the status and navigation bars while drawing (works on iOS; [limited on Android](#behaviour)). |
+| Text | Add, edit, move, pinch to resize and twist to rotate. Center guides show when text lines up with the photo's center, without snapping; solid or translucent backgrounds, drag to the bin to delete. |
+| Crop, rotate, flip | Draggable corners and edges, a rule-of-thirds grid, aspect-ratio presets, quarter turns and mirroring. Cancel, rotate, flip, reset and confirm sit in one row under the aspect-ratio chips. |
 | Compress | A quality sheet (Low, Medium, High) with the original size, a live size estimate and an **Apply** button. |
 | Size cap | `ExportOptions.maxBytes` steps JPEG quality down until the file fits. |
 | Undo and redo | For every edit, one step per finished action. |
 | Caption and send | A real `TextFormField` (validator, max length, formatters, your own controller) above a recipient chip and the send button. Optional long press and enable/disable control. |
 | Done mode | No caption, a single done button: for avatars, attachments and forms. |
 | Zoom | Pinch to zoom while no tool is open. |
-| Matches your app | Accents come from your `ColorScheme`. Override any color, text style or size per editor, or app-wide as a `ThemeExtension`. |
+| Matches your app | Accents come from your `ColorScheme`. Override the editor's colors, text styles and sizes per editor, or app-wide as a `ThemeExtension`. |
 | Replace anything | Every icon and string (for localization), plus builders for the top bar, bottom bar, send and done buttons, loading and error views, and the discard dialog. |
 | Adaptive discard prompt | Closing with unsaved edits asks first: a Cupertino alert on iOS and macOS, a Material dialog elsewhere. |
 | Sharp, small output | Edits are stored as data and rendered once at export, at full resolution, capped by `maxLongEdge`. JPEG or PNG. |
@@ -195,6 +195,9 @@ Or in one step: `flutter pub add chat_image_editor`.
 | Dart SDK | 3.8.0 |
 | Platforms | Android, iOS, Web, macOS, Windows, Linux |
 | Platform setup | None: no native code, no permissions, no `Info.plist` or manifest entries |
+
+Flutter 3.32.0 is a deliberate baseline: it's the oldest version CI checks
+the package against, by analyzing it with that version.
 
 > The editor itself needs no permissions. If you pick photos with
 > [`image_picker`](https://pub.dev/packages/image_picker), follow that
@@ -339,7 +342,9 @@ final result = await controller.export(caption: 'Hello');
 ```
 
 > The editor disposes the controller it creates itself. A controller you pass
-> in is yours to dispose.
+> in is yours to dispose. If you leave the editor's `config` at its default,
+> the editor uses `controller.config`; a `config` you pass to the editor
+> replaces the controller's.
 
 ### Example App
 
@@ -414,8 +419,11 @@ Each field resolves in this order:
 | `palette` | White, black, red, orange, yellow, green, cyan, blue, purple, pink: the color slider's stops |
 | `sendButtonSize` / `iconSize` | `52` / `24` |
 
-`ChatImageEditorThemeData` has a field for every color, text style and size
-the editor uses; see the [theme reference](doc/CUSTOMIZATION.md#theme).
+`ChatImageEditorThemeData` has a field for the editor's colors, text styles
+and sizes; see the [theme reference](doc/CUSTOMIZATION.md#theme). A few
+colors are fixed: drop shadows, the black or white icon on the pen-color
+swatch (picked for contrast with the pen color), the translucent text
+background (black, 50%) and the black or white text on a solid one.
 
 ### Icons
 
@@ -499,7 +507,9 @@ the send button.
 - `onSendLongPress` runs on a long press of the send button. It receives an
   `export` function so you can render the image on demand, for example after
   the user picks a time to schedule the message. Return `true` to close the
-  editor or `false` to stay.
+  editor or `false` to stay. Handle the result inside the callback: closing
+  this way counts as a cancel, so `ChatImageEditor.open` completes with
+  `null` and an embedded editor calls `onCancel`, not `onComplete`.
 
 ```dart
 final online = ValueNotifier<bool>(true);
@@ -605,7 +615,7 @@ const config = ChatImageEditorConfig(
 | `enableZoom` | `true` | Pinch-to-zoom while no tool is open. |
 | `enableHaptics` | `true` | Light haptic feedback on alignment guides, color picks and the delete target. |
 | `showUndoRedo` | `true` | Undo and redo buttons in the top bar (undo only while drawing). |
-| `hideSystemBarsWhileDrawing` | `false` | Opt-in. Hides the status and navigation bars while the draw tool is open. |
+| `hideSystemBarsWhileDrawing` | `false` | Opt-in. Hides the status and navigation bars while the draw tool is open. Works on iOS. On Android it uses `SystemUiMode.manual`, which Android ignores for apps that target API 36 or later (Flutter's default) and which needs the [edge-to-edge opt-out](https://docs.flutter.dev/release/breaking-changes/default-systemuimode-edge-to-edge) on API 35. |
 
 ---
 
@@ -734,7 +744,7 @@ Release builds compile the spans out.
 |---|---|
 | `chat_image_editor.load` / `.decode` | Decoding the preview, and any decode of encoded bytes |
 | `chat_image_editor.export` | A whole export, with every `ExportStats` value at the end |
-| `chat_image_editor.render` / `.rasterize` | Painting the export and reading back the pixels |
+| `chat_image_editor.render` / `.rasterize` | Decoding, painting and reading back the export pixels, and the read-back alone |
 | `chat_image_editor.paint` | One `CompositionRenderer.paint`: every preview frame |
 | `chat_image_editor.encode` / `.encode_pixels` | One encoder call, and its pixel work in the isolate |
 | `chat_image_editor.fit_max_bytes` | The `maxBytes` quality ladder |
@@ -742,7 +752,9 @@ Release builds compile the spans out.
 
 ### Benchmarks
 
-The `benchmark/` suite measures the hot paths on a synthesized 12 MP photo:
+The `benchmark/` suite measures the hot paths on a synthesized 12 MP photo.
+The benchmarks and `tool/` aren't part of the published package, so run them
+from a clone of the [repository](https://github.com/ashiqu-ali/chat_image_editor):
 
 ```bash
 fvm flutter test benchmark
@@ -831,16 +843,16 @@ class ChatImageEditorResult {
 |---|---|---|---|
 | `image` | `Uint8List` | required | Encoded source image (JPEG, PNG, WebP, …) |
 | `controller` | `ChatImageEditorController?` | `null` | External controller; the editor creates and disposes its own when `null` |
-| `config` | `ChatImageEditorConfig` | `ChatImageEditorConfig()` | Tools, mode, limits and export |
+| `config` | `ChatImageEditorConfig` | `ChatImageEditorConfig()` | Tools, mode, limits and export. With an external `controller`, the default uses `controller.config`; any other value replaces it |
 | `theme` | `ChatImageEditorThemeData?` | `null` | Color, text style and size overrides |
 | `icons` | `ChatImageEditorIcons` | `ChatImageEditorIcons()` | Icon overrides |
 | `strings` | `ChatImageEditorStrings` | `ChatImageEditorStrings()` | Text overrides, for localization |
 | `captionField` | `CaptionFieldConfig` | `CaptionFieldConfig()` | The caption `TextFormField` |
 | `builders` | `ChatImageEditorBuilders` | `ChatImageEditorBuilders()` | Replacement UI regions |
 | `sendEnabled` | `ValueListenable<bool>?` | `null` | Disables the send button while `false` |
-| `onSendLongPress` | `SendLongPressCallback?` | `null` | Long-press action for the send button |
-| `onComplete` | `ValueChanged<ChatImageEditorResult>?` | `null` | Widget only. Called with the result; pops the route when `null` |
-| `onCancel` | `VoidCallback?` | `null` | Widget only. Called on close; pops the route when `null` |
+| `onSendLongPress` | `SendLongPressCallback?` | `null` | Long-press action for the send button; returning `true` closes the editor like a cancel |
+| `onComplete` | `ValueChanged<ChatImageEditorResult>?` | `null` | Widget only. Called with the result of send or done; pops the route when `null` |
+| `onCancel` | `VoidCallback?` | `null` | Widget only. Called on close, and when `onSendLongPress` returns `true`. When `null`, the editor pops its route with `null` |
 
 | Static method | Returns | Description |
 |---|---|---|
@@ -981,8 +993,12 @@ The full API, with every member documented, is on
   share immutable lists, one entry per finished action, never per pointer
   event.
 - **Off the UI thread.** `DartImageEncoder` runs in a background isolate
-  where isolates exist. Dependencies point one way: `ui → controller → core →
-  models`.
+  where isolates exist.
+- **Dependencies point one way:** `ui → controller → core → models`.
+  `config` and `theme` sit beside these layers and are shared by them:
+  `ExportOptions` names the `ImageEncoder` from `core`, and the builders
+  and `ChatImageEditorScope` refer to the controller. Nothing outside `ui`
+  imports `ui`.
 
 More in [doc/ARCHITECTURE.md](doc/ARCHITECTURE.md).
 
@@ -1033,10 +1049,15 @@ The widget sets `controller.textLayerStyle` from the theme's
 `textLayerStyle`, so exports match. If you export with a controller that
 isn't attached to a `ChatImageEditor`, set `textLayerStyle` yourself.
 
-### The status bar covers the photo while drawing
+### The system bars stay visible while drawing
 
-Set `ChatImageEditorConfig(hideSystemBarsWhileDrawing: true)` to hide the
-system bars while the draw tool is open.
+The editor keeps the photo inside the safe area, so the status and
+navigation bars don't cover it. To hide them while the draw tool is open,
+set `ChatImageEditorConfig(hideSystemBarsWhileDrawing: true)`. This works on
+iOS. On Android it uses `SystemUiMode.manual`, which Android ignores for
+apps that target API 36 or later (Flutter's default), and which needs the
+[edge-to-edge opt-out](https://docs.flutter.dev/release/breaking-changes/default-systemuimode-edge-to-edge)
+on API 35.
 
 ### My controller was disposed (or wasn't)
 

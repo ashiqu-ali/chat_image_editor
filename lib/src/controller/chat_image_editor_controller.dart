@@ -887,8 +887,10 @@ class ChatImageEditorController extends ChangeNotifier {
     _notify();
   }
 
-  /// Records one history entry if the quality changed since the compress
-  /// tool opened. Called when the compress sheet closes.
+  /// Records one history entry if the quality changed since the last
+  /// entry. The compress sheet calls it, after [setQuality], when the user
+  /// taps Apply. Closing the compress tool with [closeTool] also commits a
+  /// pending quality change.
   ///
   /// Does nothing while a crop session is open: a quality set during the
   /// session is kept by [confirmCrop] or dropped by [cancelCrop] along with

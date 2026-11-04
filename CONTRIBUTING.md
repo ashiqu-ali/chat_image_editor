@@ -15,7 +15,12 @@ the project and how pull requests move from idea to release.
 ## Setup
 
 The project pins its Flutter SDK with [FVM](https://fvm.app) (see `.fvmrc`).
-Plain `flutter` works too if your version satisfies `pubspec.yaml`.
+Plain `flutter` works for the package if your version satisfies
+`pubspec.yaml`. The example app needs the pinned version (3.47.9): its
+`pubspec.yaml` turns on Swift Package Manager with
+`flutter: config: enable-swift-package-manager`, which older versions such
+as Flutter 3.32 reject. On iOS and macOS the example uses Swift Package
+Manager, so there's no Podfile and no `pod install`.
 
 ```bash
 fvm install
@@ -44,8 +49,11 @@ For performance-sensitive changes also run the benchmarks; see
 - Every public member has a `///` doc comment.
 - Don't use language features newer than the minimum Dart SDK in
   `pubspec.yaml`; the minimum-Flutter CI job catches this.
-- Widgets never hard-code colors, icons or user-facing strings; they come
-  from the theme, icon and string classes so apps can customize them.
+- Widgets don't hard-code icons or user-facing strings, and take their
+  colors from the theme, so apps can customize them. The few fixed colors
+  are drop shadows, the translucent text background and contrast colors
+  picked from another color, such as the black or white icon on the
+  pen-color swatch.
 - See [doc/ARCHITECTURE.md](doc/ARCHITECTURE.md) for where code belongs.
 
 ## How pull requests are handled
@@ -67,14 +75,20 @@ Every PR runs:
 | Check | What it enforces |
 |---|---|
 | **CI / Format, analyze and test** | formatting, analyzer, all tests, coverage report, example app |
-| **CI / Minimum supported Flutter** | the package still analyzes on the oldest supported SDK |
+| **CI / Analyze on the minimum supported Flutter** | the package (`lib` and `test`, without the example) still analyzes on Flutter 3.32.0 |
 | **CI / Benchmarks** | reports export and encoding timings (informational) |
 | **CI / Pub score and publish dry run** | pub.dev score and a valid package |
 | **PR checks / Conventional title** | the title format |
 | **PR checks / Tests and CHANGELOG** | changes to `lib/` come with tests and a `CHANGELOG.md` entry |
 
 A bot labels the PR by the areas it touches (`p: core`, `p: ui`,
-`p: theming`, `a: api`, `a: performance`, `example`, `docs`, `ci`).
+`p: theming`, `a: api`, `a: performance`, `a: tests`, `example`, `docs`,
+`ci`, `dependencies`).
+
+> **Note:** GitHub Actions doesn't run for this repository at the moment,
+> so the checks and labels above don't run on pull requests and aren't
+> required to merge for now. Run the [checks](#checks) locally before you
+> push, and say in the PR that they pass.
 
 ### 3. Exemptions
 

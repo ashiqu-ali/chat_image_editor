@@ -45,8 +45,9 @@ class CaptionFieldConfig {
   /// Starting caption, when no [controller] is given.
   final String? initialValue;
 
-  /// Replaces the default pill decoration. If its `hintText` is `null`, the
-  /// hint from `ChatImageEditorStrings.captionHint` is used.
+  /// Replaces the default pill decoration. If it has neither a `hintText`
+  /// nor a `hint`, the hint from `ChatImageEditorStrings.captionHint` is
+  /// used.
   final InputDecoration? decoration;
 
   /// Style of the typed text, merged onto the theme's caption style: it
@@ -68,7 +69,8 @@ class CaptionFieldConfig {
   /// Keyboard type.
   final TextInputType keyboardType;
 
-  /// Action button on the keyboard.
+  /// Action button on the keyboard. With [TextInputAction.send], the
+  /// keyboard's send button sends the image, like the send button.
   final TextInputAction textInputAction;
 
   /// Automatic capitalization.

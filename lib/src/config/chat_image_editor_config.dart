@@ -92,9 +92,10 @@ class ChatImageEditorConfig {
   /// the photo gets the whole screen.
   ///
   /// Both bars come back when drawing ends or the editor closes. Off by
-  /// default, because system UI is app-wide state. Uses
-  /// `SystemUiMode.manual`, which Android ignores for apps that target API 36
-  /// or later.
+  /// default, because system UI is app-wide state. Works on iOS. On Android
+  /// it uses `SystemUiMode.manual`, which Android ignores for apps that
+  /// target API 36 or later (Flutter's default) and which needs the
+  /// edge-to-edge opt-out on API 35.
   final bool hideSystemBarsWhileDrawing;
 
   /// Returns a copy with the given fields replaced.

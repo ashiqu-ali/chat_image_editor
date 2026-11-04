@@ -21,9 +21,10 @@ All notable changes to this project are documented here. The format follows
 - Text tool: add, edit, move, pinch to resize and rotate, drag to delete,
   center alignment guides and background styles, with a **Done** pill and
   the color slider while typing.
-- Crop with aspect-ratio presets, rotate, flip and reset in one bottom row.
-  The back button or gesture cancels the crop (and closes text entry or the
-  compress sheet) instead of closing the editor.
+- Crop with aspect-ratio presets, rotate, flip and reset. Cancel, rotate,
+  flip, reset and confirm sit in one row under the aspect-ratio chips.
+  The back button or gesture cancels the crop (and closes text entry, the
+  compress sheet or draw mode) instead of closing the editor.
 - Compression with a quality sheet in steps of 10 labelled Low, Medium or
   High, the original size, a live size estimate, an **Apply** button, and a
   `maxBytes` target.
@@ -32,7 +33,10 @@ All notable changes to this project are documented here. The format follows
   edits that uses the platform's style: a Cupertino alert on iOS and macOS,
   a Material dialog elsewhere.
 - `ChatImageEditorConfig.hideSystemBarsWhileDrawing` (off by default) to
-  hide the status and navigation bars while drawing.
+  hide the status and navigation bars while the draw tool is open. Works on
+  iOS. On Android it uses `SystemUiMode.manual`, which Android ignores for
+  apps that target API 36 or later (Flutter's default) and which needs the
+  edge-to-edge opt-out on API 35.
 - Theming that defaults to the host app's `ColorScheme`, with per-field
   overrides through `ChatImageEditorThemeData`, also usable as a
   `ThemeExtension`.

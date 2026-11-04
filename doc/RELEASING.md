@@ -18,7 +18,8 @@ publish.
 
 1. If the UI changed, re-record the README GIFs and screenshots with one
    command from the repository root, with an iOS simulator booted
-   (`DEVICE=<udid>` picks one; `--no-gifs` refreshes only the screenshots):
+   (`DEVICE=<udid>` picks one; `tool/record_gifs.sh --screenshots --no-gifs`
+   refreshes only the screenshots):
 
    ```bash
    tool/record_gifs.sh --screenshots
