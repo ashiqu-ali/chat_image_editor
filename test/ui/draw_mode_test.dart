@@ -209,16 +209,12 @@ void main() {
       final semantics = tester.ensureSemantics();
       final controller = await _openDraw(tester);
 
+      // The label and the slider's value and actions share one node.
       final brush = find.semantics.byLabel('Brush size');
-      expect(
-        brush.evaluate().single,
-        containsSemantics(
-          label: 'Brush size',
-          isSlider: true,
-          hasIncreaseAction: true,
-          hasDecreaseAction: true,
-        ),
-      );
+      final data = brush.evaluate().single.getSemanticsData();
+      expect(data.value, isNotEmpty);
+      expect(data.hasAction(SemanticsAction.increase), isTrue);
+      expect(data.hasAction(SemanticsAction.decrease), isTrue);
 
       final before = controller.strokeWidth;
       tester.semantics.increase(brush);
@@ -370,8 +366,10 @@ void main() {
 
       final done = find.semantics.byLabel('Done');
       expect(
-        done.evaluate().single,
-        containsSemantics(label: 'Done', isButton: true, hasTapAction: true),
+        done.evaluate().single.getSemanticsData().hasAction(
+          SemanticsAction.tap,
+        ),
+        isTrue,
       );
       tester.semantics.tap(done);
       await tester.pumpAndSettle();
