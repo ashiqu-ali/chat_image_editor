@@ -100,16 +100,17 @@ The PR's labels decide where it appears in the release notes.
 ## Breaking changes
 
 - Avoid them when you can: add the new API, deprecate the old one with
-  `@Deprecated('Use X instead. Deprecated in 0.3.0.')`, and remove it in a
-  later minor release (before 1.0) or major release (after 1.0).
+  `@Deprecated('Use X instead. Deprecated in 1.3.0.')`, and remove it in the
+  next major release.
 - Label the PR `breaking-change` and add a migration note to the
   `CHANGELOG.md` entry.
 
 ## Versioning and releases
 
-The package follows [semantic versioning](https://dart.dev/tools/pub/versioning).
-Before 1.0, breaking changes bump the minor version (`0.1.x` → `0.2.0`).
-Maintainers release from `main` by creating a GitHub release; see
+The package follows [semantic versioning](https://dart.dev/tools/pub/versioning):
+fixes bump the patch version (`1.0.1`), new features the minor version
+(`1.1.0`) and breaking changes the major version (`2.0.0`).
+Maintainers publish releases to pub.dev by hand from `main`; see
 [doc/RELEASING.md](doc/RELEASING.md).
 
 ## Commit messages
