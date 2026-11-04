@@ -4,9 +4,9 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-11-04
 
-## [1.0.0]
+Initial release.
 
 ### Added
 
@@ -59,6 +59,16 @@ All notable changes to this project are documented here. The format follows
 - A benchmark suite (`fvm flutter test benchmark`) with a Markdown report
   tool (`tool/benchmark_report.dart`), and frame-timing integration tests
   for drawing, text dragging, cropping and zooming in the example app.
+- Screen reader support: every tool, pill and toggle is labelled, sliders
+  step through their values and read them out (`High · 90`), and the color
+  slider names the palette color nearest its position.
+- Runs on Android, iOS, web, macOS, Windows and Linux. The package is pure
+  Dart with no platform code; the image and edits are painted with
+  `CustomPaint`.
 - An example app built as a chat: pick a photo, edit it and send it; each
   bubble shows the file size and export time, and the photo viewer shows
   the full `ExportStats`.
+- Documentation: a README with GIF previews, and guides to customization,
+  architecture, performance and releasing in `doc/`.
+
+[1.0.0]: https://github.com/ashiqu-ali/chat_image_editor/releases/tag/v1.0.0

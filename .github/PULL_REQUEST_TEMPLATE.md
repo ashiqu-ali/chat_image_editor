@@ -17,7 +17,7 @@ Fixes #<!-- issue number; required unless the change is trivial, like a typo -->
 - [ ] The title follows [Conventional Commits](https://www.conventionalcommits.org/).
 - [ ] `dart format`, `flutter analyze` and `flutter test` pass locally.
 - [ ] I added or updated tests, or explained below why this is test-exempt.
-- [ ] I added an entry under **Unreleased** in `CHANGELOG.md`, or explained below why it isn't needed.
+- [ ] I added an entry under **Unreleased** in `CHANGELOG.md` (adding that heading at the top if it isn't there), or explained below why it isn't needed.
 - [ ] New or changed public API has `///` doc comments.
 - [ ] Breaking changes are called out below with a migration note, or there are none.
 - [ ] For performance-sensitive changes, I ran the benchmarks (`flutter test benchmark`) and noted the results.
