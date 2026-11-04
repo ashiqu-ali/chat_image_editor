@@ -70,7 +70,7 @@ void main() {
       expect(controller.value.quarterTurns, 2);
     });
 
-    for (final tool in <String>['Text', 'Crop and rotate', 'Draw']) {
+    for (final tool in <String>['Crop and rotate', 'Draw']) {
       testWidgets('opening "$tool" slides the same caption bar out', (
         tester,
       ) async {
@@ -94,5 +94,35 @@ void main() {
         expect(identical(hidden, before), isTrue);
       });
     }
+
+    testWidgets('text entry hides the same caption bar at once', (
+      tester,
+    ) async {
+      final controller = await pumpReadyEditor(tester);
+      final before = tester.element(find.byType(EditorBottomBar));
+
+      await tester.tap(find.byTooltip('Text'));
+      await tester.pump();
+      expect(controller.editingTextId, isNotNull);
+
+      // The entry's field is the only one on screen.
+      expect(find.byType(EditorBottomBar), findsNothing);
+      expect(find.byType(TextField), findsOneWidget);
+      final hidden = tester.element(
+        find.byType(EditorBottomBar, skipOffstage: false),
+      );
+      expect(identical(hidden, before), isTrue);
+
+      await tester.tap(find.byTooltip('Done'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      // It slides back in once text entry ends.
+      expect(find.byType(EditorBottomBar), findsOneWidget);
+      expect(
+        identical(tester.element(find.byType(EditorBottomBar)), before),
+        isTrue,
+      );
+      await tester.pumpAndSettle();
+    });
   });
 }

@@ -151,6 +151,7 @@ class _ReadyView extends StatelessWidget {
                 child: _BottomChrome(
                   showCaption: showCaption,
                   showDrawToolbar: showDrawToolbar,
+                  editingText: editing,
                 ),
               ),
             ),
@@ -244,10 +245,16 @@ class _BottomChrome extends StatelessWidget {
   const _BottomChrome({
     required this.showCaption,
     required this.showDrawToolbar,
+    required this.editingText,
   });
 
   final bool showCaption;
   final bool showDrawToolbar;
+
+  /// Text entry is open. Its overlay covers the editor, so the caption bar
+  /// leaves at once instead of sliding out under it, and only one text
+  /// field is ever on screen.
+  final bool editingText;
 
   static const Duration duration = Duration(milliseconds: 250);
 
@@ -268,7 +275,7 @@ class _BottomChrome extends StatelessWidget {
         // twice during a transition.
         _SlideFade(
           visible: showCaption,
-          duration: time,
+          duration: editingText ? Duration.zero : time,
           child: const EditorBottomBar(),
         ),
         AnimatedSwitcher(
