@@ -77,14 +77,18 @@ class ChatImageEditorThemeData
   /// Icons and labels drawn over the editor background. Defaults to white.
   final Color? foregroundColor;
 
-  /// Backdrop behind the editor's buttons, pills and header chip, for
-  /// contrast on bright photos. Defaults to translucent black.
+  /// Backdrop behind the editor's buttons, pills and the caption header
+  /// chip, for contrast on bright photos. Defaults to translucent black.
   final Color? toolbarBackgroundColor;
 
-  /// Icon color of the selected tool and shape. Defaults to [primaryColor].
+  /// Icon color of the selected tool and shape. Their backdrop stays
+  /// [toolbarBackgroundColor]; there's no filled circle. Also marks other
+  /// selected options, such as the crop aspect ratio. Defaults to
+  /// [primaryColor].
   final Color? activeToolColor;
 
-  /// Dim layer behind the text entry overlay. Defaults to translucent black.
+  /// Dim layer behind the text entry overlay, and the shade the bottom
+  /// controls sit on. Defaults to translucent black.
   final Color? scrimColor;
 
   /// Crop frame border. Defaults to white.
@@ -120,8 +124,9 @@ class ChatImageEditorThemeData
   /// Snap guide lines shown while moving text. Defaults to [primaryColor].
   final Color? guideLineColor;
 
-  /// Caption field fill. Defaults to translucent black, so the photo shows
-  /// through.
+  /// Fill of the default caption pill. Defaults to translucent black, so
+  /// the photo shows through. A custom `CaptionFieldConfig.decoration` sets
+  /// its own fill.
   final Color? captionFillColor;
 
   /// Caption text. Defaults to white.
@@ -269,14 +274,16 @@ class ChatImageEditorThemeData
     final foreground = t.foregroundColor ?? const Color(0xFFFFFFFF);
     final captionText = t.captionTextColor ?? const Color(0xFFFFFFFF);
     final sheetForeground = t.sheetForegroundColor ?? const Color(0xFFFFFFFF);
+    // Behind controls that float over the photo: dark enough for white
+    // icons and text, light enough for the photo to show through.
+    const translucentBlack = Color(0x8A000000);
 
     return ChatImageEditorResolvedTheme(
       primaryColor: primary,
       onPrimaryColor: onPrimary,
       backgroundColor: t.backgroundColor ?? const Color(0xFF000000),
       foregroundColor: foreground,
-      toolbarBackgroundColor:
-          t.toolbarBackgroundColor ?? const Color(0x8A000000),
+      toolbarBackgroundColor: t.toolbarBackgroundColor ?? translucentBlack,
       activeToolColor: t.activeToolColor ?? primary,
       scrimColor: t.scrimColor ?? const Color(0x99000000),
       cropFrameColor: t.cropFrameColor ?? const Color(0xFFFFFFFF),
@@ -286,10 +293,10 @@ class ChatImageEditorThemeData
       sliderActiveColor: t.sliderActiveColor ?? primary,
       sliderInactiveColor: t.sliderInactiveColor ?? const Color(0x4DFFFFFF),
       sliderThumbColor: t.sliderThumbColor ?? const Color(0xFFFFFFFF),
-      deleteTargetColor: t.deleteTargetColor ?? const Color(0x8A000000),
+      deleteTargetColor: t.deleteTargetColor ?? translucentBlack,
       deleteTargetActiveColor: t.deleteTargetActiveColor ?? scheme.error,
       guideLineColor: t.guideLineColor ?? primary,
-      captionFillColor: t.captionFillColor ?? const Color(0x8A000000),
+      captionFillColor: t.captionFillColor ?? translucentBlack,
       captionTextColor: captionText,
       captionHintColor: t.captionHintColor ?? const Color(0x99FFFFFF),
       sendButtonColor: t.sendButtonColor ?? primary,

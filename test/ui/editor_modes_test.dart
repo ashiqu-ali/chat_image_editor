@@ -100,6 +100,24 @@ void main() {
       expect(find.byIcon(Icons.check), findsOneWidget);
     });
 
+    testWidgets('the done button sits alone at the end of the bar', (
+      tester,
+    ) async {
+      await pumpReadyEditor(
+        tester,
+        config: doneConfig,
+        captionField: const CaptionFieldConfig(header: Text('Sending to Sam')),
+      );
+
+      // The header belongs to the caption, which done mode doesn't show.
+      expect(find.text('Sending to Sam'), findsNothing);
+      final screen = tester.getSize(find.byType(Scaffold));
+      final done = tester.getRect(find.byTooltip('Done'));
+      expect(done.left, greaterThan(screen.width / 2));
+      expect(done.right, greaterThanOrEqualTo(screen.width - 16));
+      expect(done.bottom, greaterThanOrEqualTo(screen.height - 80));
+    });
+
     testWidgets('done completes without a caption', (tester) async {
       ChatImageEditorResult? result;
       await pumpReadyEditor(

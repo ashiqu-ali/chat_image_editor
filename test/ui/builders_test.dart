@@ -35,6 +35,7 @@ void main() {
     ) async {
       await pumpReadyEditor(
         tester,
+        captionField: const CaptionFieldConfig(header: Text('Sending to Sam')),
         builders: ChatImageEditorBuilders(
           bottomBar: (context, controller) => const Text('custom bottom bar'),
         ),
@@ -42,7 +43,32 @@ void main() {
 
       expect(find.text('custom bottom bar'), findsOneWidget);
       expect(find.byType(TextFormField), findsNothing);
+      expect(find.text('Sending to Sam'), findsNothing);
       expect(find.byTooltip('Send'), findsNothing);
+    });
+
+    testWidgets('sendButton replaces only the button, beside the header', (
+      tester,
+    ) async {
+      await pumpReadyEditor(
+        tester,
+        captionField: const CaptionFieldConfig(header: Text('Sending to Sam')),
+        builders: ChatImageEditorBuilders(
+          sendButton: (context, details) => const SizedBox.square(
+            key: ValueKey<String>('custom send'),
+            dimension: 44,
+          ),
+        ),
+      );
+
+      final field = tester.getRect(find.byType(TextFormField));
+      final header = tester.getRect(find.text('Sending to Sam'));
+      final send = tester.getRect(find.byKey(const ValueKey('custom send')));
+      expect(send.top, greaterThanOrEqualTo(field.bottom));
+      expect(header.top, greaterThanOrEqualTo(field.bottom));
+      expect(header.right, lessThan(send.left));
+      expect(header.center.dy, moreOrLessEquals(send.center.dy));
+      expect(send.right, moreOrLessEquals(field.right));
     });
 
     testWidgets('sendButton gets live details', (tester) async {
