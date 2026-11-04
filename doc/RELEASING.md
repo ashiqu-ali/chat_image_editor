@@ -44,9 +44,17 @@ Publishing is safe by construction:
 
 ## Each release
 
-1. Make sure `main` is green. If the UI changed, regenerate the screenshots
-   used by the README and pub.dev (from `example/`, with a simulator or
-   device running):
+1. Make sure `main` is green. If the UI changed, re-record the README GIFs
+   and screenshots with one command from the repository root, with an iOS
+   simulator booted (`DEVICE=<udid>` picks one; `--no-gifs` refreshes only
+   the screenshots):
+
+   ```bash
+   tool/record_gifs.sh --screenshots
+   ```
+
+   Or regenerate just the screenshots by hand (from `example/`, with a
+   simulator or device running):
 
    ```bash
    fvm flutter drive --driver=test_driver/screenshot_driver.dart \
