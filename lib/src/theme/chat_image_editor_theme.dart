@@ -77,11 +77,11 @@ class ChatImageEditorThemeData
   /// Icons and labels drawn over the editor background. Defaults to white.
   final Color? foregroundColor;
 
-  /// Circular backdrop behind top-bar buttons, for contrast on bright
-  /// photos. Defaults to translucent black.
+  /// Backdrop behind the editor's buttons, pills and header chip, for
+  /// contrast on bright photos. Defaults to translucent black.
   final Color? toolbarBackgroundColor;
 
-  /// Highlight for the selected tool and shape. Defaults to [primaryColor].
+  /// Icon color of the selected tool and shape. Defaults to [primaryColor].
   final Color? activeToolColor;
 
   /// Dim layer behind the text entry overlay. Defaults to translucent black.
@@ -120,7 +120,8 @@ class ChatImageEditorThemeData
   /// Snap guide lines shown while moving text. Defaults to [primaryColor].
   final Color? guideLineColor;
 
-  /// Caption field fill. Defaults to dark grey.
+  /// Caption field fill. Defaults to translucent black, so the photo shows
+  /// through.
   final Color? captionFillColor;
 
   /// Caption text. Defaults to white.
@@ -275,7 +276,7 @@ class ChatImageEditorThemeData
       backgroundColor: t.backgroundColor ?? const Color(0xFF000000),
       foregroundColor: foreground,
       toolbarBackgroundColor:
-          t.toolbarBackgroundColor ?? const Color(0x59000000),
+          t.toolbarBackgroundColor ?? const Color(0x8A000000),
       activeToolColor: t.activeToolColor ?? primary,
       scrimColor: t.scrimColor ?? const Color(0x99000000),
       cropFrameColor: t.cropFrameColor ?? const Color(0xFFFFFFFF),
@@ -288,7 +289,7 @@ class ChatImageEditorThemeData
       deleteTargetColor: t.deleteTargetColor ?? const Color(0x8A000000),
       deleteTargetActiveColor: t.deleteTargetActiveColor ?? scheme.error,
       guideLineColor: t.guideLineColor ?? primary,
-      captionFillColor: t.captionFillColor ?? const Color(0xFF262626),
+      captionFillColor: t.captionFillColor ?? const Color(0x8A000000),
       captionTextColor: captionText,
       captionHintColor: t.captionHintColor ?? const Color(0x99FFFFFF),
       sendButtonColor: t.sendButtonColor ?? primary,

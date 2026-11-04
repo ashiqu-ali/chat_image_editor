@@ -87,9 +87,11 @@ class _ReadyView extends StatelessWidget {
     final safe = MediaQuery.viewPaddingOf(context);
 
     final showTopBar = tool != EditorTool.crop && !editing;
-    final showBottomBar =
-        (tool == EditorTool.none || tool == EditorTool.text) && !editing;
     final hideChrome = state.gesture || state.drawing;
+
+    final showCaption =
+        (tool == EditorTool.none || tool == EditorTool.text) && !editing;
+    final showDrawToolbar = tool == EditorTool.draw && !editing;
 
     final topBar = scope.builders.topBar?.call(context, scope.controller);
 
@@ -101,8 +103,8 @@ class _ReadyView extends StatelessWidget {
           const EditorCanvas(),
           if (tool == EditorTool.crop) const CropOverlay(),
           if (tool == EditorTool.crop) const CropControls(),
-          if (tool == EditorTool.draw && !editing)
-            _Fade(visible: !state.drawing, child: const DrawControls()),
+          if (showDrawToolbar)
+            _Fade(visible: !state.drawing, child: const DrawColorPicker()),
           if (showTopBar)
             Positioned(
               top: 0,
@@ -113,16 +115,18 @@ class _ReadyView extends StatelessWidget {
                 child: topBar ?? const EditorTopBar(),
               ),
             ),
-          if (showBottomBar)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _Fade(
-                visible: !state.gesture,
-                child: const EditorBottomBar(),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _Fade(
+              visible: !hideChrome,
+              child: _BottomChrome(
+                showCaption: showCaption,
+                showDrawToolbar: showDrawToolbar,
               ),
             ),
+          ),
           if (state.gesture)
             Positioned(
               left: 0,
@@ -142,6 +146,141 @@ class _ReadyView extends StatelessWidget {
           if (tool == EditorTool.compress)
             const Positioned.fill(child: CompressSheet()),
         ],
+      ),
+    );
+  }
+}
+
+/// The bottom controls over a scrim that fades into the photo: the caption
+/// bar, or the draw tool's controls, each sliding and fading in and out.
+class _BottomChrome extends StatelessWidget {
+  const _BottomChrome({
+    required this.showCaption,
+    required this.showDrawToolbar,
+  });
+
+  final bool showCaption;
+  final bool showDrawToolbar;
+
+  static const Duration duration = Duration(milliseconds: 250);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ChatImageEditorScope.of(context).theme;
+    final time = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : duration;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+          colors: <Color>[theme.scrimColor, theme.scrimColor.withAlpha(0)],
+        ),
+      ),
+      child: AnimatedSize(
+        duration: time,
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.bottomCenter,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: <Widget>[
+            // The caption bar stays mounted while a tool is open, so its
+            // field, focus and form keep their state and are never built
+            // twice during a transition.
+            _SlideFade(
+              visible: showCaption,
+              duration: time,
+              child: const EditorBottomBar(),
+            ),
+            AnimatedSwitcher(
+              duration: time,
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.3),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              ),
+              layoutBuilder: (current, previous) => Stack(
+                alignment: Alignment.bottomCenter,
+                children: <Widget>[
+                  for (final child in previous) IgnorePointer(child: child),
+                  ?current,
+                ],
+              ),
+              child: showDrawToolbar
+                  ? const DrawToolbar(key: ValueKey<String>('draw'))
+                  : const SizedBox.shrink(key: ValueKey<String>('none')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Slides [child] up into place and fades it in when [visible], and back out
+/// when not. Once hidden it goes offstage: it takes no space, can't be
+/// focused and isn't seen by screen readers, but keeps its state.
+class _SlideFade extends StatefulWidget {
+  const _SlideFade({
+    required this.visible,
+    required this.duration,
+    required this.child,
+  });
+
+  final bool visible;
+  final Duration duration;
+  final Widget child;
+
+  @override
+  State<_SlideFade> createState() => _SlideFadeState();
+}
+
+class _SlideFadeState extends State<_SlideFade> {
+  late bool _offstage = !widget.visible;
+
+  @override
+  void didUpdateWidget(_SlideFade oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.visible) {
+      _offstage = false;
+    } else if (widget.duration == Duration.zero) {
+      _offstage = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = widget.visible;
+    return Offstage(
+      offstage: _offstage,
+      child: ExcludeFocus(
+        excluding: !visible,
+        child: IgnorePointer(
+          ignoring: !visible,
+          child: AnimatedSlide(
+            offset: visible ? Offset.zero : const Offset(0, 0.3),
+            duration: widget.duration,
+            curve: visible ? Curves.easeOutCubic : Curves.easeInCubic,
+            child: AnimatedOpacity(
+              opacity: visible ? 1 : 0,
+              duration: widget.duration,
+              onEnd: () {
+                if (!widget.visible && mounted) {
+                  setState(() => _offstage = true);
+                }
+              },
+              child: widget.child,
+            ),
+          ),
+        ),
       ),
     );
   }

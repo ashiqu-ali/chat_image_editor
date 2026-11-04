@@ -15,7 +15,7 @@ abstract final class EditorLayout {
   static const double topBarHeight = 64;
 
   /// Space kept clear above the image in crop mode, below the safe area.
-  static const double cropTopInset = 76;
+  static const double cropTopInset = 32;
 
   /// Space kept clear below the image in crop mode, above the safe area.
   static const double cropBottomInset = 136;

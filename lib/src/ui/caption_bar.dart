@@ -14,8 +14,9 @@ import 'send_button.dart';
 /// The bottom area of the editor.
 ///
 /// Uses `ChatImageEditorBuilders.bottomBar` when set; otherwise shows the
-/// caption field and send button (send mode) or a done button (done mode).
-/// Rides above the keyboard without resizing the image.
+/// caption field with the header chip and send button below it (send mode),
+/// or a done button (done mode). Rides above the keyboard without resizing
+/// the image.
 class EditorBottomBar extends StatelessWidget {
   /// Creates the bottom bar.
   const EditorBottomBar({super.key});
@@ -61,35 +62,63 @@ class _CaptionRow extends StatelessWidget {
     final scope = ChatImageEditorScope.of(context);
     final host = EditorHost.of(context);
     final caption = scope.captionField;
+    final header = caption.enabled ? caption.header : null;
 
     return Form(
       key: host.formKey,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            if (caption.enabled && caption.header != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 8, bottom: 6),
-                child: DefaultTextStyle.merge(
-                  style: scope.theme.labelStyle,
-                  child: caption.header!,
-                ),
-              ),
+            if (caption.enabled) ...<Widget>[
+              const CaptionField(),
+              const SizedBox(height: 8),
+            ],
             Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
               children: <Widget>[
-                if (caption.enabled)
-                  const Expanded(child: CaptionField())
-                else
-                  const Spacer(),
+                Expanded(
+                  child: header == null
+                      ? const SizedBox.shrink()
+                      : Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: _HeaderChip(child: header),
+                        ),
+                ),
                 const SizedBox(width: 8),
                 const SendButtonSlot(),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// `CaptionFieldConfig.header` in a translucent pill, beside the send
+/// button: typically who the image goes to.
+class _HeaderChip extends StatelessWidget {
+  const _HeaderChip({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ChatImageEditorScope.of(context).theme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.toolbarBackgroundColor,
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: DefaultTextStyle.merge(
+          style: theme.labelStyle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          child: child,
         ),
       ),
     );

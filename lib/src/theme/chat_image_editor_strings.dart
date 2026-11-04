@@ -9,6 +9,9 @@ typedef ByteSizeFormatter = String Function(int bytes);
 typedef ColorLabelFormatter =
     String Function(Color color, int index, int count);
 
+/// Describes a JPEG quality (1–100) in the compress sheet, e.g. `High · 90`.
+typedef QualityFormatter = String Function(int quality);
+
 /// Every user-facing string in the editor, with English defaults.
 ///
 /// Pass a translated instance to localize the editor:
@@ -59,8 +62,11 @@ class ChatImageEditorStrings {
     this.keepEditing = 'Keep editing',
     this.loadFailed = "Couldn't open this image.",
     this.exportFailed = "Couldn't prepare this image. Please try again.",
+    this.color = 'Color',
+    this.apply = 'Apply',
     this.formatBytes = defaultFormatBytes,
     this.colorLabel = defaultColorLabel,
+    this.formatQuality = defaultFormatQuality,
   });
 
   /// Caption field hint.
@@ -171,11 +177,21 @@ class ChatImageEditorStrings {
   /// Shown when export fails.
   final String exportFailed;
 
+  /// Semantics label of the color slider.
+  final String color;
+
+  /// Compress sheet button that keeps the chosen quality.
+  final String apply;
+
   /// Formats file sizes in the compress sheet.
   final ByteSizeFormatter formatBytes;
 
-  /// Semantics label of each swatch in the color strip.
+  /// Names the palette color closest to the color slider's position, for
+  /// screen readers. [index] is that color's position in the palette.
   final ColorLabelFormatter colorLabel;
+
+  /// Describes the quality in the compress sheet.
+  final QualityFormatter formatQuality;
 
   /// Formats [bytes] as `B`, `KB` or `MB` with one decimal.
   static String defaultFormatBytes(int bytes) {
@@ -184,8 +200,22 @@ class ChatImageEditorStrings {
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
-  /// Labels a swatch by position, e.g. `Color 3 of 10`.
+  /// Labels a palette color by position, e.g. `Color 3 of 10`.
   static String defaultColorLabel(Color color, int index, int count) {
     return 'Color ${index + 1} of $count';
+  }
+
+  /// Names a quality tier and its value: `Low · 40`, `Medium · 70` or
+  /// `High · 90`.
+  static String defaultFormatQuality(int quality) {
+    final String tier;
+    if (quality <= 40) {
+      tier = 'Low';
+    } else if (quality <= 75) {
+      tier = 'Medium';
+    } else {
+      tier = 'High';
+    }
+    return '$tier · $quality';
   }
 }

@@ -10,17 +10,8 @@ import 'editor_icon_button.dart';
 import 'editor_layout.dart';
 import 'editor_slider.dart';
 
-/// Draw tool chrome: the color strip on the right, and the shape picker and
-/// brush size slider at the bottom.
-///
-/// Fills the editor; empty areas let touches through to the canvas.
-class DrawControls extends StatelessWidget {
-  /// Creates the draw controls.
-  const DrawControls({super.key});
-
-  /// Space kept for the bottom controls when sizing the color strip.
-  static const double bottomControlsHeight = 128;
-
+/// Icons and labels of the draw tool's shapes.
+abstract final class DrawControls {
   /// The icon for [shape].
   static Widget iconFor(ShapeType shape, ChatImageEditorIcons icons) {
     switch (shape) {
@@ -52,6 +43,48 @@ class DrawControls extends StatelessWidget {
         return strings.arrow;
     }
   }
+}
+
+/// The draw tool's color slider, on the right below the top bar.
+///
+/// Fills the editor; everywhere else lets touches through to the canvas.
+class DrawColorPicker extends StatelessWidget {
+  /// Creates the color picker.
+  const DrawColorPicker({super.key});
+
+  /// Space kept for the draw toolbar when sizing the slider.
+  static const double toolbarAllowance = 140;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = ChatImageEditorScope.of(context).controller;
+    final safe = MediaQuery.viewPaddingOf(context);
+    return Stack(
+      children: <Widget>[
+        Positioned(
+          top: safe.top + EditorLayout.topBarHeight + 8,
+          right: safe.right + 4,
+          bottom: safe.bottom + toolbarAllowance,
+          child: Align(
+            alignment: Alignment.topRight,
+            child: ControllerSelector<Color>(
+              selector: (c) => c.drawColor,
+              builder: (context, color, _) => ColorStrip(
+                selected: color,
+                onSelected: controller.setDrawColor,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The draw tool's bottom controls: the shape picker and the brush size.
+class DrawToolbar extends StatelessWidget {
+  /// Creates the toolbar.
+  const DrawToolbar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -61,62 +94,42 @@ class DrawControls extends StatelessWidget {
     final safe = MediaQuery.viewPaddingOf(context);
     final showSlider = config.minStrokeWidth < config.maxStrokeWidth;
 
-    return ControllerSelector<({ShapeType shape, Color color, double width})>(
-      selector: (c) =>
-          (shape: c.shapeType, color: c.drawColor, width: c.strokeWidth),
+    return ControllerSelector<({ShapeType shape, double width})>(
+      selector: (c) => (shape: c.shapeType, width: c.strokeWidth),
       builder: (context, state, _) {
-        return Stack(
-          children: <Widget>[
-            Positioned(
-              top: safe.top + EditorLayout.topBarHeight + 8,
-              right: safe.right + 4,
-              bottom: safe.bottom + bottomControlsHeight,
-              child: Align(
-                alignment: Alignment.topRight,
-                child: ColorStrip(
-                  selected: state.color,
-                  onSelected: controller.setDrawColor,
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            safe.left + 12,
+            8,
+            safe.right + 12,
+            safe.bottom + 8,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (config.shapes.length > 1)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    for (final shape in config.shapes)
+                      EditorIconButton(
+                        icon: DrawControls.iconFor(shape, scope.icons),
+                        tooltip: DrawControls.labelFor(shape, scope.strings),
+                        active: state.shape == shape,
+                        onPressed: () => controller.setShapeType(shape),
+                      ),
+                  ],
                 ),
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      if (config.shapes.length > 1)
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          children: <Widget>[
-                            for (final shape in config.shapes)
-                              EditorIconButton(
-                                icon: iconFor(shape, scope.icons),
-                                tooltip: labelFor(shape, scope.strings),
-                                active: state.shape == shape,
-                                onPressed: () => controller.setShapeType(shape),
-                              ),
-                          ],
-                        ),
-                      if (showSlider)
-                        EditorSlider(
-                          value: state.width,
-                          min: config.minStrokeWidth,
-                          max: config.maxStrokeWidth,
-                          semanticsLabel: scope.strings.strokeWidth,
-                          onChanged: controller.setStrokeWidth,
-                        ),
-                    ],
-                  ),
+              if (showSlider)
+                EditorSlider(
+                  value: state.width,
+                  min: config.minStrokeWidth,
+                  max: config.maxStrokeWidth,
+                  semanticsLabel: scope.strings.strokeWidth,
+                  onChanged: controller.setStrokeWidth,
                 ),
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

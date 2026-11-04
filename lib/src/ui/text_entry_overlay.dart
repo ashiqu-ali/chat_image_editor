@@ -12,13 +12,14 @@ import 'color_strip.dart';
 import 'controller_selector.dart';
 import 'editor_icon_button.dart';
 import 'editor_layout.dart';
+import 'editor_pill_button.dart';
 
 /// Full-screen, dimmed text entry for the layer in
 /// `ChatImageEditorController.editingText`.
 ///
 /// Shows the text in its live style (color, background, size as it will
-/// appear on the image), the color strip and a background toggle. Tapping
-/// the dimmed area or the done button finishes editing.
+/// appear on the image), a "Done" pill, a background toggle and the color
+/// slider. Tapping the dimmed area or "Done" finishes editing.
 class TextEntryOverlay extends StatefulWidget {
   /// Creates the overlay. Key it by the edited layer's id.
   const TextEntryOverlay({super.key});
@@ -148,18 +149,17 @@ class _TextEntryOverlayState extends State<TextEntryOverlay> {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Row(
                               children: <Widget>[
+                                EditorPillButton(
+                                  label: scope.strings.done,
+                                  onPressed: _done,
+                                ),
+                                const Spacer(),
                                 EditorIconButton(
                                   icon: scope.icons.textBackgroundIcon,
                                   tooltip: scope.strings.textBackground,
                                   active:
                                       background != TextBackgroundStyle.none,
                                   onPressed: controller.cycleTextBackground,
-                                ),
-                                const Spacer(),
-                                EditorIconButton(
-                                  icon: scope.icons.doneIcon,
-                                  tooltip: scope.strings.done,
-                                  onPressed: _done,
                                 ),
                               ],
                             ),
