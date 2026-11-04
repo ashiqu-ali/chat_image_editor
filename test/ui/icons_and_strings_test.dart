@@ -109,5 +109,75 @@ void main() {
       expect(find.byTooltip('Undo'), findsNothing);
       expect(find.byTooltip('Redo'), findsNothing);
     });
+
+    testWidgets('label the compress sheet', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpReadyEditor(
+        tester,
+        strings: ChatImageEditorStrings(
+          compress: 'Calidad de la imagen',
+          qualityLabel: 'Calidad',
+          originalSizeLabel: 'Original',
+          estimatedSizeLabel: 'Tamaño estimado',
+          estimatingSize: 'Calculando…',
+          apply: 'Aplicar',
+          formatQuality: (quality) => 'Q$quality',
+          formatBytes: (bytes) => '$bytes octetos',
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Calidad de la imagen'));
+      await tester.pump();
+      expect(find.text('Calidad de la imagen'), findsWidgets);
+      expect(find.text('Calidad'), findsOneWidget);
+      expect(find.text('Q90'), findsOneWidget);
+      expect(find.text('Aplicar'), findsOneWidget);
+      expect(find.text('Apply'), findsNothing);
+      expect(find.textContaining('octetos'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.text('Tamaño estimado')).label,
+        'Tamaño estimado\nCalculando…',
+      );
+
+      // Let the estimate finish before the editor goes away.
+      await tester.pump(const Duration(milliseconds: 350));
+      await pumpUntil(
+        tester,
+        () => find.byType(CircularProgressIndicator).evaluate().isEmpty,
+      );
+      expect(find.textContaining('octetos'), findsNWidgets(2));
+      semantics.dispose();
+    });
+  });
+
+  group('default strings', () {
+    test('name the new controls in English', () {
+      const strings = ChatImageEditorStrings();
+      expect(strings.color, 'Color');
+      expect(strings.apply, 'Apply');
+      expect(
+        strings.formatQuality,
+        ChatImageEditorStrings.defaultFormatQuality,
+      );
+      expect(strings.formatQuality(90), 'High · 90');
+      expect(strings.colorLabel, ChatImageEditorStrings.defaultColorLabel);
+      expect(
+        strings.colorLabel(const Color(0xFFFF0000), 2, 10),
+        'Color 3 of 10',
+      );
+      expect(strings.formatBytes(1536), '1.5 KB');
+    });
+
+    test('defaultFormatQuality names a tier at each boundary', () {
+      const format = ChatImageEditorStrings.defaultFormatQuality;
+      expect(format(1), 'Low · 1');
+      expect(format(10), 'Low · 10');
+      expect(format(40), 'Low · 40');
+      expect(format(41), 'Medium · 41');
+      expect(format(75), 'Medium · 75');
+      expect(format(76), 'High · 76');
+      expect(format(85), 'High · 85');
+      expect(format(100), 'High · 100');
+    });
   });
 }

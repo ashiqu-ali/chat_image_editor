@@ -54,13 +54,31 @@ const ChatImageEditorStrings spanishEditorStrings = ChatImageEditorStrings(
   keepEditing: 'Seguir editando',
   loadFailed: 'No se pudo abrir esta imagen.',
   exportFailed: 'No se pudo preparar la imagen. Inténtalo de nuevo.',
+  color: 'Color',
+  apply: 'Aplicar',
   formatBytes: formatBytesWithDecimalComma,
   colorLabel: spanishColorLabel,
+  formatQuality: spanishFormatQuality,
 );
 
-/// Names a color strip swatch for screen readers, e.g. `Color 3 de 10`.
+/// Names the palette color nearest the color slider for screen readers,
+/// e.g. `Color 3 de 10`.
 String spanishColorLabel(Color color, int index, int count) {
   return 'Color ${index + 1} de $count';
+}
+
+/// Names the quality tier with the same bounds as the English default,
+/// e.g. `Alta · 90`.
+String spanishFormatQuality(int quality) {
+  final String tier;
+  if (quality <= 40) {
+    tier = 'Baja';
+  } else if (quality <= 75) {
+    tier = 'Media';
+  } else {
+    tier = 'Alta';
+  }
+  return '$tier · $quality';
 }
 
 /// Formats a byte count with a decimal comma, e.g. `1,4 MB`.

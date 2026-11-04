@@ -4,12 +4,12 @@ import 'package:flutter/painting.dart' show Color;
 /// Formats a byte count for display, e.g. `1.4 MB`.
 typedef ByteSizeFormatter = String Function(int bytes);
 
-/// Names a color swatch for screen readers. [index] is zero-based and
-/// [count] is the number of swatches in the strip.
+/// Names a palette color for screen readers. [index] is the color's
+/// zero-based position in the palette and [count] the palette's length.
 typedef ColorLabelFormatter =
     String Function(Color color, int index, int count);
 
-/// Describes a JPEG quality (1–100) in the compress sheet, e.g. `High · 90`.
+/// Describes a JPEG quality (1–100) for display, e.g. `High · 90`.
 typedef QualityFormatter = String Function(int quality);
 
 /// Every user-facing string in the editor, with English defaults.
@@ -120,7 +120,8 @@ class ChatImageEditorStrings {
   /// Send button tooltip.
   final String send;
 
-  /// Done button tooltip.
+  /// Label of the Done buttons that end drawing and text entry, and the
+  /// send button's tooltip in done mode.
   final String done;
 
   /// Delete target semantics label.
@@ -147,7 +148,8 @@ class ChatImageEditorStrings {
   /// Arrow shape tooltip.
   final String arrow;
 
-  /// Quality slider label.
+  /// Label of the compress sheet's quality row, and the quality slider's
+  /// semantics label.
   final String qualityLabel;
 
   /// Label before the original file size.
@@ -156,7 +158,8 @@ class ChatImageEditorStrings {
   /// Label before the estimated file size.
   final String estimatedSizeLabel;
 
-  /// Shown while the size estimate is computed.
+  /// Semantics label of the spinner shown while the size estimate is
+  /// computed.
   final String estimatingSize;
 
   /// Discard dialog title.
@@ -177,7 +180,7 @@ class ChatImageEditorStrings {
   /// Shown when export fails.
   final String exportFailed;
 
-  /// Semantics label of the color slider.
+  /// Semantics label of the color slider. Its value is [colorLabel].
   final String color;
 
   /// Compress sheet button that keeps the chosen quality.
@@ -190,7 +193,8 @@ class ChatImageEditorStrings {
   /// screen readers. [index] is that color's position in the palette.
   final ColorLabelFormatter colorLabel;
 
-  /// Describes the quality in the compress sheet.
+  /// Describes a quality in the compress sheet: shown next to
+  /// [qualityLabel] and announced as the quality slider's value.
   final QualityFormatter formatQuality;
 
   /// Formats [bytes] as `B`, `KB` or `MB` with one decimal.
@@ -205,7 +209,8 @@ class ChatImageEditorStrings {
     return 'Color ${index + 1} of $count';
   }
 
-  /// Names a quality tier and its value: `Low · 40`, `Medium · 70` or
+  /// Names the quality's tier, then the quality: `Low` up to 40, `Medium`
+  /// up to 75 and `High` above, e.g. `Low · 40`, `Medium · 70` or
   /// `High · 90`.
   static String defaultFormatQuality(int quality) {
     final String tier;
