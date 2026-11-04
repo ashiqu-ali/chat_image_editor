@@ -9,7 +9,7 @@
 //
 //   fvm flutter test integration_test -d <device>
 //
-// See docs/PERFORMANCE.md in the package for what the summaries mean.
+// See doc/PERFORMANCE.md in the package for what the summaries mean.
 import 'dart:math' as math;
 import 'dart:typed_data';
 

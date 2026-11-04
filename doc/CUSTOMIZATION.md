@@ -121,7 +121,7 @@ photos stand out. Only the accents follow your `ColorScheme`. Setting
 | `sliderThumbColor` | Slider thumb. | White |
 | `deleteTargetColor` | Drag-to-delete target at rest. | Black, 54% |
 | `deleteTargetActiveColor` | Drag-to-delete target while a text layer is over it. | `ColorScheme.error` |
-| `guideLineColor` | Center snap guides shown while moving text. | `primaryColor` |
+| `guideLineColor` | Center alignment guides shown while moving text. | `primaryColor` |
 | `captionFillColor` | Caption field fill. Translucent, so the photo shows through. | Black, 54% |
 | `captionTextColor` | Caption text. | White |
 | `captionHintColor` | Caption hint. | White, 60% |
@@ -668,7 +668,7 @@ text are not here; they live in the theme, icons and strings.
 | `maxFontSize` | `0.25` | Largest text size pinching allows. |
 | `confirmDiscard` | `true` | Asks before discarding unsaved edits or a caption on close. |
 | `enableZoom` | `true` | Allows pinch-to-zoom while no tool is open. |
-| `enableHaptics` | `true` | Light haptic feedback on snaps and the delete target. |
+| `enableHaptics` | `true` | Light haptic feedback on alignment guides, color picks and the delete target. |
 | `showUndoRedo` | `true` | Shows undo and redo buttons in the top bar, and undo in the pen-mode bar. |
 | `hideSystemBarsWhileDrawing` | `false` | Opt-in. Hides the system status and navigation bars while the draw tool is open, so the whole screen is canvas. |
 

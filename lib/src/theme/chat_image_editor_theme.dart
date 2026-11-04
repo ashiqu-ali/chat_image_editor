@@ -121,7 +121,8 @@ class ChatImageEditorThemeData
   /// `ColorScheme.error`.
   final Color? deleteTargetActiveColor;
 
-  /// Snap guide lines shown while moving text. Defaults to [primaryColor].
+  /// Center alignment guides shown while moving text. Defaults to
+  /// [primaryColor].
   final Color? guideLineColor;
 
   /// Fill of the default caption pill. Defaults to translucent black, so

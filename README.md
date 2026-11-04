@@ -111,7 +111,7 @@
 |---|---|
 | Draw | Freehand pen, line, rectangle, circle and arrow, with a brush size slider. Colors come from a vertical gradient slider: drag along it to pick any color between your palette's stops. |
 | Pen mode | While drawing, the top bar morphs into a **Done** pill, undo and a swatch of the pen color, and the chrome fades out while a stroke is drawn. Opt in to `hideSystemBarsWhileDrawing` for a full-screen canvas. |
-| Text | Add, edit, move, pinch to resize and twist to rotate. Center snap guides, solid or translucent backgrounds, drag to the bin to delete. |
+| Text | Add, edit, move, pinch to resize and twist to rotate. Center alignment guides, solid or translucent backgrounds, drag to the bin to delete. |
 | Crop, rotate, flip | Draggable corners and edges, a rule-of-thirds grid, aspect-ratio presets, quarter turns and mirroring. Every crop tool sits in one bottom row. |
 | Compress | A quality sheet (Low, Medium, High) with the original size, a live size estimate and an **Apply** button. |
 | Size cap | `ExportOptions.maxBytes` steps JPEG quality down until the file fits. |
@@ -365,7 +365,7 @@ in [doc/CUSTOMIZATION.md](doc/CUSTOMIZATION.md).
 
 Out of the box the editor uses a dark, full-bleed canvas so photos stand out,
 in both light and dark app themes. Its accent (send button, sliders, the
-active tool, snap guides and the first pen color) comes from your app's
+active tool, alignment guides and the first pen color) comes from your app's
 `ColorScheme.primary`: change your seed color and the editor follows.
 
 Override any single field with `ChatImageEditorThemeData`. Fields you leave
@@ -603,7 +603,7 @@ const config = ChatImageEditorConfig(
 | `defaultFontSize` / `minFontSize` / `maxFontSize` | `0.06` / `0.02` / `0.25` | Text size, as a fraction of the image's shortest side. |
 | `confirmDiscard` | `true` | Asks before discarding unsaved edits or a caption. |
 | `enableZoom` | `true` | Pinch-to-zoom while no tool is open. |
-| `enableHaptics` | `true` | Light haptic feedback on snaps and the delete target. |
+| `enableHaptics` | `true` | Light haptic feedback on alignment guides, color picks and the delete target. |
 | `showUndoRedo` | `true` | Undo and redo buttons in the top bar (undo only while drawing). |
 | `hideSystemBarsWhileDrawing` | `false` | Opt-in. Hides the status and navigation bars while the draw tool is open. |
 

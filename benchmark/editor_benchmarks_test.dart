@@ -5,7 +5,7 @@
 //
 // Every benchmark lives in this one file so they run one after another in
 // a single process (never in parallel with each other) and the results land
-// in a single build/benchmark/results.json. See docs/PERFORMANCE.md.
+// in a single build/benchmark/results.json. See doc/PERFORMANCE.md.
 @Timeout(Duration(minutes: 10))
 library;
 
