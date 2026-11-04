@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../config/caption_field_config.dart';
+import '../controller/chat_image_editor_controller.dart';
 import '../models/editor_enums.dart';
 import '../theme/chat_image_editor_scope.dart';
 import '../theme/chat_image_editor_strings.dart';
@@ -11,12 +12,16 @@ import '../theme/chat_image_editor_theme.dart';
 import 'editor_host.dart';
 import 'send_button.dart';
 
+/// Space around the default bottom bar's content.
+const EdgeInsets _barPadding = EdgeInsets.fromLTRB(12, 8, 12, 8);
+
 /// The bottom area of the editor.
 ///
-/// Uses `ChatImageEditorBuilders.bottomBar` when set; otherwise shows the
-/// caption field with the header chip and send button below it (send mode),
-/// or a done button (done mode). Rides above the keyboard without resizing
-/// the image.
+/// Uses `ChatImageEditorBuilders.bottomBar` when set. Otherwise, in send
+/// mode, the caption field spans the full width with one row below it: the
+/// `CaptionFieldConfig.header` chip at the start and the send button at the
+/// end. In done mode only the done button shows, at the end. Rides above the
+/// keyboard without resizing the image.
 class EditorBottomBar extends StatelessWidget {
   /// Creates the bottom bar.
   const EditorBottomBar({super.key});
@@ -33,14 +38,14 @@ class EditorBottomBar extends StatelessWidget {
       content = custom(context, scope.controller);
     } else if (scope.config.mode == ChatImageEditorMode.done) {
       content = const Padding(
-        padding: EdgeInsets.fromLTRB(8, 8, 12, 8),
+        padding: _barPadding,
         child: Align(
           alignment: AlignmentDirectional.centerEnd,
           child: SendButtonSlot(),
         ),
       );
     } else {
-      content = const _CaptionRow();
+      content = const _CaptionBar();
     }
 
     return Padding(
@@ -54,8 +59,11 @@ class EditorBottomBar extends StatelessWidget {
   }
 }
 
-class _CaptionRow extends StatelessWidget {
-  const _CaptionRow();
+/// Send mode: the full-width caption field, then the header chip and the
+/// send button on one row. With the caption turned off only the send button
+/// shows.
+class _CaptionBar extends StatelessWidget {
+  const _CaptionBar();
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +75,7 @@ class _CaptionRow extends StatelessWidget {
     return Form(
       key: host.formKey,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        padding: _barPadding,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -78,6 +86,8 @@ class _CaptionRow extends StatelessWidget {
             ],
             Row(
               children: <Widget>[
+                // Takes the room the send button leaves, so a long header
+                // is ellipsized instead of pushing the button off screen.
                 Expanded(
                   child: header == null
                       ? const SizedBox.shrink()
@@ -97,8 +107,8 @@ class _CaptionRow extends StatelessWidget {
   }
 }
 
-/// `CaptionFieldConfig.header` in a translucent pill, beside the send
-/// button: typically who the image goes to.
+/// `CaptionFieldConfig.header` in a translucent pill on a single line,
+/// ellipsized when too long: typically who the image goes to.
 class _HeaderChip extends StatelessWidget {
   const _HeaderChip({required this.child});
 
@@ -127,9 +137,12 @@ class _HeaderChip extends StatelessWidget {
 
 /// The caption `TextFormField`, configured from `CaptionFieldConfig`.
 ///
-/// `CaptionFieldConfig.autofocus` applies only the first time the field
-/// appears: it's rebuilt from scratch whenever a tool closes, and must not
-/// pop the keyboard up again then.
+/// The field stays mounted while a tool is open: the editor hides it and
+/// takes its focus away, and when the tool closes it comes back with its
+/// text but without focus or the keyboard. `CaptionFieldConfig.autofocus`
+/// applies only the first time the field appears in an editor, so a field
+/// built again (for example after the image changes) doesn't take focus
+/// either.
 class CaptionField extends StatefulWidget {
   /// Creates the caption field.
   const CaptionField({super.key});
@@ -184,11 +197,50 @@ class CaptionField extends StatefulWidget {
 
 class _CaptionFieldState extends State<CaptionField> {
   bool? _autofocus;
+  ChatImageEditorController? _controller;
+  bool _toolOpen = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Runs again whenever the field moves in the tree (the form keeps its
+    // state through its global key); only the first call may take the
+    // editor's one-time autofocus.
     _autofocus ??= EditorHost.of(context).takeCaptionAutofocus();
+    final controller = ChatImageEditorScope.of(context).controller;
+    if (!identical(controller, _controller)) {
+      _controller?.removeListener(_handleControllerChange);
+      _controller = controller;
+      controller.addListener(_handleControllerChange);
+      _toolOpen = _isToolOpen(controller);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_handleControllerChange);
+    super.dispose();
+  }
+
+  static bool _isToolOpen(ChatImageEditorController controller) {
+    return controller.activeTool != EditorTool.none ||
+        controller.editingTextId != null;
+  }
+
+  /// Takes focus, and with it the keyboard, away from the caption when a
+  /// tool opens or text entry starts, however they were started. The caption
+  /// is hidden then and must not keep receiving typed text, and text entry
+  /// can only take focus once the caption has let go of it.
+  void _handleControllerChange() {
+    final controller = _controller;
+    if (controller == null || !mounted) return;
+    final open = _isToolOpen(controller);
+    if (open == _toolOpen) return;
+    _toolOpen = open;
+    if (!open) return;
+    final focus = FocusManager.instance.primaryFocus;
+    final owner = focus?.context?.findAncestorStateOfType<_CaptionFieldState>();
+    if (identical(owner, this)) focus!.unfocus();
   }
 
   @override

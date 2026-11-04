@@ -91,6 +91,7 @@ class CaptionFieldConfig {
   /// doesn't take focus again when it reappears after a tool closes.
   final bool autofocus;
 
-  /// Optional widget above the field, e.g. "Sending to Alex".
+  /// Optional widget shown below the field in a translucent chip beside the
+  /// send button, e.g. "Sending to Alex".
   final Widget? header;
 }
