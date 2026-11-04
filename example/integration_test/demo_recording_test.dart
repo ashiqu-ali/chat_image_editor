@@ -111,41 +111,58 @@ void main() {
 
 // ───────────────────────── Scenarios ─────────────────────────
 
-/// Attach the sample photo, circle a spot, send it, open the sent photo.
+/// Attach the sample photo, circle a spot, add a caption, send it, open the
+/// sent photo.
 Future<void> _chat(_Demo demo) async {
   await demo.mark();
-  await demo.pause(700);
+  await demo.pause(600);
 
   await demo.tapOr(find.byTooltip('Send a photo'), () {
     throw StateError('The chat composer has no "Send a photo" button.');
   });
-  await demo.pause(650);
+  await demo.pause(550);
   await demo.tapOr(find.text('Sample photo'), () {
     throw StateError('The photo source sheet has no "Sample photo" option.');
   });
   final editor = await demo.waitForEditor();
-  await demo.pause(500);
+  await demo.pause(400);
 
   await demo.tapOr(
     find.byTooltip(_strings.draw),
     () => editor.selectTool(EditorTool.draw),
   );
-  await demo.pause(450);
+  await demo.pause(400);
   await demo.tapColor(
     _red,
     fallback: () => editor.setDrawColor(const Color(0xFFF44336)),
   );
-  await demo.pause(250);
+  await demo.pause(200);
 
   // Circle the place to meet, by the lake.
   final image = demo.imageRect(editor);
   await demo.stroke(
     (t) => _loop(image, const Offset(0.68, 0.71), 0.15, 0.13, t),
-    milliseconds: 750,
+    milliseconds: 700,
   );
-  await demo.pause(350);
+  await demo.pause(300);
   await demo.tapOr(find.byTooltip(_strings.done), editor.closeTool);
-  await demo.pause(450);
+  await demo.pause(350);
+
+  // A caption, when the caption field is where it's expected.
+  final caption = find.byWidgetPredicate(
+    (widget) =>
+        widget is TextField &&
+        widget.decoration?.hintText == _strings.captionHint,
+  );
+  if (await demo.tap(caption)) {
+    await demo.waitFor(
+      () => demo.focusedField() != null,
+      reason: 'the caption field to take focus',
+    );
+    await demo.pause(200);
+    await demo.type('Here, by the lake', perCharacter: 45);
+    await demo.pause(350);
+  }
 
   await demo.tapOr(find.byTooltip(_strings.send), () {
     throw StateError('The editor has no send button.');
@@ -161,7 +178,7 @@ Future<void> _chat(_Demo demo) async {
     () => photo.evaluate().isNotEmpty,
     reason: 'the photo to appear in the chat',
   );
-  await demo.pause(1000);
+  await demo.pause(900);
 
   await demo.tapAt(
     demo.tester.getCenter(
@@ -169,7 +186,7 @@ Future<void> _chat(_Demo demo) async {
     ),
   );
   await demo.waitForRoute(find.byType(PhotoViewerScreen));
-  await demo.pause(1300);
+  await demo.pause(1200);
   await demo.mark();
 }
 
@@ -243,8 +260,8 @@ Future<void> _draw(_Demo demo) async {
   await demo.mark();
 }
 
-/// The text tool: type, color, background, then move with the center
-/// guides and pinch to scale and rotate.
+/// The text tool: type, color, background, then move along an alignment
+/// guide and pinch to scale and rotate.
 Future<void> _text(_Demo demo) async {
   final editor = await demo.openEditor();
   await demo.mark();
@@ -281,8 +298,8 @@ Future<void> _text(_Demo demo) async {
   });
   await demo.pause(500);
 
-  // Drag it away, back across the vertical center line (the guide shows
-  // and the layer snaps to it), then up.
+  // Drag it away, back to the vertical center line, where the alignment
+  // guide shows, then up along it.
   final image = demo.imageRect(editor);
   final start = demo.textCenter(editor, image);
   final out = start + Offset(image.width * 0.2, image.height * 0.22);
@@ -360,18 +377,18 @@ Future<void> _crop(_Demo demo) async {
 Future<void> _compress(_Demo demo) async {
   final editor = await demo.openEditor();
   await demo.mark();
-  await demo.pause(600);
+  await demo.pause(500);
 
   await demo.tapOr(
     find.byTooltip(_strings.compress),
     () => editor.selectTool(EditorTool.compress),
   );
   await demo.waitForEstimate();
-  await demo.pause(700);
+  await demo.pause(500);
 
-  await demo.slideQuality(from: editor.quality, to: 40, milliseconds: 900);
+  await demo.slideQuality(from: editor.quality, to: 40, milliseconds: 800);
   await demo.waitForEstimate();
-  await demo.pause(900);
+  await demo.pause(700);
 
   await demo.tapOr(find.text(_strings.apply), () {
     editor
@@ -379,7 +396,7 @@ Future<void> _compress(_Demo demo) async {
       ..commitQuality()
       ..closeTool();
   });
-  await demo.pause(600);
+  await demo.pause(500);
   await demo.tapOr(find.byTooltip(_strings.send), () {
     throw StateError('The editor has no send button.');
   });
@@ -387,7 +404,7 @@ Future<void> _compress(_Demo demo) async {
     () => find.byType(ChatImageEditor).evaluate().isEmpty,
     reason: 'the editor to close after sending',
   );
-  await demo.pause(1600);
+  await demo.pause(1300);
   await demo.mark();
 }
 
@@ -466,6 +483,8 @@ class _Demo {
       (await codec.getNextFrame()).image.dispose();
       codec.dispose();
     }
+    // The editor ignores touches while it exports; let it rebuild first.
+    await pause(300);
     await tapOr(find.byTooltip(_strings.close), () {
       Navigator.of(tester.element(find.byType(ChatImageEditor))).pop();
     });
