@@ -601,7 +601,7 @@ class ChatImageEditorController extends ChangeNotifier {
     if (layer != null) {
       _editingTextId = id;
       _activeTool = EditorTool.text;
-      // The color strip and background button show the edited layer's
+      // The color slider and background button show the edited layer's
       // style, and new text continues with it.
       _textColor = layer.color;
       _textColorChosen = true;
