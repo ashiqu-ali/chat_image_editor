@@ -9,18 +9,20 @@ import 'editor_haptics.dart';
 import 'editor_layout.dart';
 
 /// Which center guides show while a text layer is moved.
+///
+/// Guides only indicate alignment; they never move the layer.
 @immutable
-class SnapGuides {
+class CenterGuides {
   /// Creates a guide state.
-  const SnapGuides({this.vertical = false, this.horizontal = false});
+  const CenterGuides({this.vertical = false, this.horizontal = false});
 
   /// No guides.
-  static const SnapGuides none = SnapGuides();
+  static const CenterGuides none = CenterGuides();
 
-  /// The layer is snapped to the horizontal center (vertical guide line).
+  /// The layer's center is on the image's vertical center line.
   final bool vertical;
 
-  /// The layer is snapped to the vertical center (horizontal guide line).
+  /// The layer's center is on the image's horizontal center line.
   final bool horizontal;
 
   /// Whether any guide shows.
@@ -28,7 +30,7 @@ class SnapGuides {
 
   @override
   bool operator ==(Object other) {
-    return other is SnapGuides &&
+    return other is CenterGuides &&
         other.vertical == vertical &&
         other.horizontal == horizontal;
   }
@@ -82,15 +84,16 @@ class TextLayerGestures {
   TextLayerGestures();
 
   /// Center guides to draw; updated while a layer moves.
-  final ValueNotifier<SnapGuides> guides = ValueNotifier<SnapGuides>(
-    SnapGuides.none,
+  final ValueNotifier<CenterGuides> guides = ValueNotifier<CenterGuides>(
+    CenterGuides.none,
   );
 
   /// Extra touch margin around text, in canvas pixels.
   static const double hitSlop = 12;
 
-  /// Distance from center, in canvas pixels, within which a layer snaps.
-  static const double snapDistance = 8;
+  /// Distance from a center line, in canvas pixels, within which a layer's
+  /// center counts as aligned and the guide shows.
+  static const double guideDistance = 8;
 
   String? _id;
   Offset _startView = Offset.zero;
@@ -179,7 +182,7 @@ class TextLayerGestures {
     _baseRotation = 0;
     _rotation = 0;
     _overDelete = false;
-    guides.value = SnapGuides.none;
+    guides.value = CenterGuides.none;
   }
 
   /// Starts a new recognizer phase (a finger was added or lifted) at
@@ -194,6 +197,11 @@ class TextLayerGestures {
   /// Applies a recognizer update. [scale] and [rotation] are relative to the
   /// current phase. [deleteTarget] is the delete target in global
   /// coordinates, when it's on screen.
+  ///
+  /// The layer follows the fingers exactly. Center guides show while its
+  /// center is within [guideDistance] of the image's center lines, with a
+  /// light haptic when one first appears; they're hidden while the layer
+  /// hovers the delete target.
   void update(
     ChatImageEditorController controller, {
     required Offset localFocal,
@@ -217,26 +225,8 @@ class TextLayerGestures {
     _scale = (_baseScale * scale).clamp(_minScale, _maxScale).toDouble();
     _rotation = _baseRotation + rotation;
 
-    final target = _startView + _translation;
-    final snapVertical = (target.dx - 0.5).abs() * rect.width <= snapDistance;
-    final snapHorizontal =
-        (target.dy - 0.5).abs() * rect.height <= snapDistance;
-    var applied = _translation;
-    if (snapVertical) applied = Offset(0.5 - _startView.dx, applied.dy);
-    if (snapHorizontal) applied = Offset(applied.dx, 0.5 - _startView.dy);
-
-    final previous = guides.value;
-    if ((snapVertical && !previous.vertical) ||
-        (snapHorizontal && !previous.horizontal)) {
-      editorHaptic(enabled: haptics);
-    }
-    guides.value = SnapGuides(
-      vertical: snapVertical,
-      horizontal: snapHorizontal,
-    );
-
     controller.updateTextGesture(
-      viewTranslation: applied,
+      viewTranslation: _translation,
       scale: _scale,
       rotation: _rotation,
     );
@@ -247,6 +237,20 @@ class TextLayerGestures {
       controller.setOverDeleteTarget(over);
       if (over) editorHaptic(enabled: haptics);
     }
+
+    final center = _startView + _translation;
+    final next = over
+        ? CenterGuides.none
+        : CenterGuides(
+            vertical: (center.dx - 0.5).abs() * rect.width <= guideDistance,
+            horizontal: (center.dy - 0.5).abs() * rect.height <= guideDistance,
+          );
+    final previous = guides.value;
+    if ((next.vertical && !previous.vertical) ||
+        (next.horizontal && !previous.horizontal)) {
+      editorHaptic(enabled: haptics);
+    }
+    guides.value = next;
   }
 
   /// Ends the gesture. The controller deletes the layer if it was dropped on
@@ -255,7 +259,7 @@ class TextLayerGestures {
     if (_id == null) return;
     _id = null;
     _overDelete = false;
-    guides.value = SnapGuides.none;
+    guides.value = CenterGuides.none;
     controller.endTextGesture();
   }
 
@@ -263,7 +267,7 @@ class TextLayerGestures {
   void dispose() => guides.dispose();
 }
 
-/// Paints the center guide lines while a text layer is snapped.
+/// Paints the center guide lines while a moved text layer is aligned.
 class GuideLinesPainter extends CustomPainter {
   /// Creates the painter. Repaints when [guides] changes.
   GuideLinesPainter({
@@ -273,7 +277,7 @@ class GuideLinesPainter extends CustomPainter {
   }) : super(repaint: guides);
 
   /// Which guides to draw.
-  final ValueListenable<SnapGuides> guides;
+  final ValueListenable<CenterGuides> guides;
 
   /// The displayed image, in canvas pixels.
   final Rect imageRect;

@@ -25,6 +25,17 @@ class CompressSheet extends StatefulWidget {
   /// Highest quality the slider offers.
   static const int maxQuality = 100;
 
+  /// Distance between two slider stops.
+  static const int qualityStep = 10;
+
+  /// The slider stop that shows [quality]: the nearest multiple of
+  /// [qualityStep] between [minQuality] and [maxQuality]. A quality from
+  /// `ExportOptions.quality` needn't be one.
+  static int stopFor(int quality) {
+    final stop = (quality / qualityStep).round() * qualityStep;
+    return stop.clamp(minQuality, maxQuality);
+  }
+
   @override
   State<CompressSheet> createState() => _CompressSheetState();
 }
@@ -93,9 +104,13 @@ class _CompressSheetState extends State<CompressSheet> {
   void _apply() {
     final controller = _controller;
     if (controller == null) return;
-    controller
-      ..setQuality(_quality)
-      ..commitQuality();
+    // Applying the quality already in effect records nothing, even when it
+    // comes from `ExportOptions.quality` rather than an earlier pick.
+    if (_quality != controller.quality) {
+      controller
+        ..setQuality(_quality)
+        ..commitQuality();
+    }
     _close();
   }
 
@@ -112,29 +127,31 @@ class _CompressSheetState extends State<CompressSheet> {
     final strings = scope.strings;
     final sourceBytes = scope.controller.sourceBytes;
     final estimate = _estimate;
+    final stop = CompressSheet.stopFor(_quality);
 
+    // Each row reads as one item: its label, then its value.
     Widget row(String label, Widget value) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: <Widget>[
-            Expanded(child: Text(label, style: theme.sheetBodyStyle)),
-            value,
-          ],
+      return MergeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: <Widget>[
+              Expanded(child: Text(label, style: theme.sheetBodyStyle)),
+              value,
+            ],
+          ),
         ),
       );
     }
 
     final Widget estimateValue;
     if (_estimating) {
-      estimateValue = Semantics(
-        label: strings.estimatingSize,
-        child: SizedBox.square(
-          dimension: 16,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: theme.primaryColor,
-          ),
+      estimateValue = SizedBox.square(
+        dimension: 16,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: theme.primaryColor,
+          semanticsLabel: strings.estimatingSize,
         ),
       );
     } else {
@@ -168,29 +185,41 @@ class _CompressSheetState extends State<CompressSheet> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    Text(strings.compress, style: theme.sheetTitleStyle),
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        strings.compress,
+                        style: theme.sheetTitleStyle,
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    row(
-                      strings.qualityLabel,
-                      Text(
-                        strings.formatQuality(_quality),
-                        style: theme.sheetBodyStyle,
+                    // The slider below announces the same label and value.
+                    ExcludeSemantics(
+                      child: row(
+                        strings.qualityLabel,
+                        Text(
+                          strings.formatQuality(_quality),
+                          style: theme.sheetBodyStyle,
+                        ),
                       ),
                     ),
                     EditorSlider(
-                      value: _quality
-                          .clamp(
-                            CompressSheet.minQuality,
-                            CompressSheet.maxQuality,
-                          )
-                          .toDouble(),
+                      value: stop.toDouble(),
                       min: CompressSheet.minQuality.toDouble(),
                       max: CompressSheet.maxQuality.toDouble(),
                       divisions:
                           (CompressSheet.maxQuality -
                               CompressSheet.minQuality) ~/
-                          10,
+                          CompressSheet.qualityStep,
                       semanticsLabel: strings.qualityLabel,
+                      // The thumb's stop reads as the draft itself, which
+                      // can sit between stops.
+                      semanticFormatterCallback: (value) {
+                        final quality = value.round();
+                        return strings.formatQuality(
+                          quality == stop ? _quality : quality,
+                        );
+                      },
                       onChanged: _handleChanged,
                     ),
                     if (sourceBytes != null)
@@ -215,6 +244,8 @@ class _CompressSheetState extends State<CompressSheet> {
   }
 }
 
+/// The full-width button that applies the draft quality, in the send
+/// button's colors.
 class _ApplyButton extends StatelessWidget {
   const _ApplyButton({required this.label, required this.onPressed});
 
@@ -225,6 +256,7 @@ class _ApplyButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ChatImageEditorScope.of(context).theme;
     return Semantics(
+      container: true,
       button: true,
       child: Material(
         color: theme.sendButtonColor,

@@ -1,4 +1,4 @@
-# Keep the published package lean: only the library, tests, example and docs.
+# Keep the published package lean: only the library, tests, example and doc.
 # (A .pubignore replaces .gitignore for publishing, so build output is listed too.)
 /.*
 /benchmark/
@@ -7,3 +7,5 @@ build/
 coverage/
 example/build/
 doc/api/
+# The README shows the GIFs from GitHub, so they aren't shipped.
+doc/gifs/
