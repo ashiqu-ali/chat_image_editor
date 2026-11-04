@@ -1,7 +1,24 @@
 # Releasing
 
-Releases are cut from `main` by a maintainer and published to pub.dev by
-GitHub Actions when a version tag is pushed.
+Day-to-day work lands on `develop`. A release merges `develop` into `main`,
+then a GitHub release on `main` creates the version tag, and GitHub Actions
+publishes that tag to pub.dev after a maintainer approves it.
+
+```
+feature branch ──PR──► develop ──release PR──► main ──GitHub release vX.Y.Z──► pub.dev
+                 squash                merge commit       tag on main     (approval)
+```
+
+Publishing is safe by construction:
+
+- pub.dev's automated publishing uses GitHub's OIDC token, so there's no
+  pub.dev secret stored anywhere.
+- pub.dev only accepts publishes from this repository, from tags matching
+  `v{{version}}`, and from the `pub.dev` environment.
+- The `pub.dev` environment only deploys `v*` tags and waits for a
+  maintainer's approval.
+- The workflow refuses a tag that isn't on `main` or doesn't match the
+  `pubspec.yaml` version.
 
 ## One-time setup
 
@@ -11,8 +28,9 @@ GitHub Actions when a version tag is pushed.
    - Repository: `ashiqu-ali/chat_image_editor`
    - Tag pattern: `v{{version}}`
    - Require the GitHub Actions environment: `pub.dev`
-3. In the GitHub repository, create an environment named `pub.dev`
-   (Settings → Environments) and, optionally, require your approval for it.
+3. In the GitHub repository, the environment `pub.dev` (Settings →
+   Environments) requires a maintainer's approval and only deploys `v*`
+   tags.
 
 ## Each release
 
@@ -32,19 +50,23 @@ GitHub Actions when a version tag is pushed.
    published package, so re-record them only when the UI changed and keep
    the file names.
 
-2. Open a PR titled `chore: release X.Y.Z` that:
+2. On `develop`, open a PR titled `chore: release X.Y.Z` that:
    - sets `version: X.Y.Z` in `pubspec.yaml`,
    - renames `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z]` and adds a
      fresh empty `## [Unreleased]` above it.
-3. Merge it, then tag the merge commit:
 
-   ```bash
-   git switch main && git pull
-   git tag vX.Y.Z
-   git push origin vX.Y.Z
-   ```
+   Squash-merge it into `develop`.
+3. Open a PR from `develop` into `main` titled `chore: release X.Y.Z` and
+   merge it with **Create a merge commit**, so `main` and `develop` keep the
+   same history. Don't squash or rebase this one.
+4. On GitHub, **Releases → Draft a new release**: target `main`, create the
+   tag `vX.Y.Z`, use **Generate release notes** (grouped by PR labels, see
+   `.github/release.yml`) and publish the release. Creating the release
+   pushes the tag.
+5. The **Publish to pub.dev** workflow starts, waits for your approval in
+   the `pub.dev` environment (Actions → the run → **Review deployments**),
+   checks that the tag is on `main` and matches the pubspec version, and
+   publishes.
 
-4. The **Publish to pub.dev** workflow checks that the tag matches the
-   pubspec version and publishes.
-5. Create a GitHub release from the tag and use **Generate release notes**;
-   they're grouped by PR labels (see `.github/release.yml`).
+A hotfix follows the same path: fix on `develop`, release PR into `main`.
+If you ever commit to `main` directly, merge `main` back into `develop`.

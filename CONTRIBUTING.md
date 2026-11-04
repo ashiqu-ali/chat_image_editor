@@ -52,10 +52,11 @@ For performance-sensitive changes also run the benchmarks; see
 
 ### 1. Open the PR
 
-- Branch from `main`.
+- Branch from `develop` and open the PR against `develop` (the default
+  branch). `main` only receives releases.
 - Write the title as a [Conventional Commit](https://www.conventionalcommits.org/),
   e.g. `feat(text): add pinch-to-rotate`. PRs are squash-merged, so the title
-  becomes the commit on `main`.
+  becomes the commit on `develop`.
 - Fill in the template: what and why, the issue it fixes
   (`Fixes #123`), and the checklist.
 - UI changes include before/after screenshots.
@@ -94,8 +95,8 @@ add these labels.
 
 ### 5. Merge
 
-A maintainer squash-merges once checks pass and the review is approved.
-The PR's labels decide where it appears in the release notes.
+A maintainer squash-merges into `develop` once checks pass and the review
+is approved. The PR's labels decide where it appears in the release notes.
 
 ## Breaking changes
 
@@ -109,7 +110,8 @@ The PR's labels decide where it appears in the release notes.
 
 The package follows [semantic versioning](https://dart.dev/tools/pub/versioning).
 Before 1.0, breaking changes bump the minor version (`0.1.x` → `0.2.0`).
-Maintainers release from `main`; see [doc/RELEASING.md](doc/RELEASING.md).
+Maintainers release by merging `develop` into `main` and creating a GitHub
+release on `main`; see [doc/RELEASING.md](doc/RELEASING.md).
 
 ## Commit messages
 
