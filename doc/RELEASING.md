@@ -1,53 +1,24 @@
 # Releasing
 
-Work lands on `main` through squash-merged PRs. A GitHub release on `main`
-creates the version tag, and GitHub Actions publishes that tag to pub.dev.
-The tag starts the publish, never the other way round: publishing (by hand
-or by the workflow) doesn't create a tag, and merging a PR doesn't publish.
+A maintainer publishes each release to pub.dev by hand from an up-to-date
+`main`. Nothing publishes automatically: merging a PR, pushing a tag and
+creating a GitHub release don't publish.
 
 ```
-feature branch ──PR (squash)──► main ──GitHub release vX.Y.Z──► tag ──► pub.dev
+feature branch ──PR (squash)──► main ──fvm flutter pub publish──► pub.dev
+                                  └──tag vX.Y.Z + GitHub release
 ```
 
-Every release needs a new `version:` in `pubspec.yaml`; pub.dev refuses a
-version that was already published.
-
-After the first release, the plan is to add a `develop` branch for
-day-to-day work, release by merging `develop` into `main`, and require a
-maintainer's approval in the `pub.dev` environment before publishing.
-
-Publishing is safe by construction:
-
-- pub.dev's automated publishing uses GitHub's OIDC token, so there's no
-  pub.dev secret stored anywhere.
-- pub.dev only accepts publishes from this repository, from tags matching
-  `v{{version}}`, and from the `pub.dev` environment.
-- The `pub.dev` environment can be limited to `v*` tags and set to wait
-  for a maintainer's approval.
-- The workflow refuses a tag that isn't on `main` or doesn't match the
-  `pubspec.yaml` version, and skips a version that's already on pub.dev.
-
-## One-time setup
-
-1. Publish the first version by hand: `fvm flutter pub publish`.
-2. On pub.dev, open the package's **Admin** tab and enable
-   **Automated publishing** from GitHub Actions:
-   - Repository: `ashiqu-ali/chat_image_editor`
-   - Tag pattern: `v{{version}}`
-   - Require the GitHub Actions environment: `pub.dev`
-3. In the GitHub repository, create an environment named `pub.dev`
-   (Settings → Environments), limit it to `v*` tags and, optionally,
-   require your approval for it.
-4. Tag the hand-published version so git and pub.dev agree: create a GitHub
-   release `vX.Y.Z` on the commit you published. The publish workflow runs,
-   sees the version is already on pub.dev and stops without publishing.
+Every release needs a new `version:` in `pubspec.yaml`. pub.dev refuses a
+version that was already published, and a published version can't be
+deleted (it can only be retracted within 7 days), so check before you
+publish.
 
 ## Each release
 
-1. Make sure `main` is green. If the UI changed, re-record the README GIFs
-   and screenshots with one command from the repository root, with an iOS
-   simulator booted (`DEVICE=<udid>` picks one; `--no-gifs` refreshes only
-   the screenshots):
+1. If the UI changed, re-record the README GIFs and screenshots with one
+   command from the repository root, with an iOS simulator booted
+   (`DEVICE=<udid>` picks one; `--no-gifs` refreshes only the screenshots):
 
    ```bash
    tool/record_gifs.sh --screenshots
@@ -74,12 +45,29 @@ Publishing is safe by construction:
      fresh empty `## [Unreleased]` above it.
 
    Squash-merge it into `main`.
-3. On GitHub, **Releases → Draft a new release**: target `main`, create the
-   tag `vX.Y.Z`, use **Generate release notes** (grouped by PR labels, see
-   `.github/release.yml`) and publish the release. Creating the release
-   pushes the tag.
-4. The **Publish to pub.dev** workflow starts (waiting for your approval
-   if the `pub.dev` environment requires it: Actions → the run → **Review
-   deployments**), checks that the tag is on `main` and matches the pubspec
-   version, and publishes. A few minutes later the version is live on
-   pub.dev.
+
+3. Check and publish from a clean, up-to-date `main`:
+
+   ```bash
+   git switch main && git pull
+   fvm dart format --output=none --set-exit-if-changed .
+   fvm flutter analyze
+   fvm flutter test
+   (cd example && fvm flutter analyze && fvm flutter test)
+   fvm flutter pub publish --dry-run   # must say "Package has 0 warnings."
+   fvm flutter pub publish
+   ```
+
+   `pub publish` shows the files it will upload and asks you to confirm.
+   The first time, it opens a browser to sign in to pub.dev.
+
+4. Tag the commit you published and create the GitHub release:
+
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+   Then on GitHub, **Releases → Draft a new release**: choose the tag
+   `vX.Y.Z`, use **Generate release notes** (grouped by PR labels, see
+   `.github/release.yml`) and publish the release.

@@ -176,7 +176,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  chat_image_editor: ^0.1.0
+  chat_image_editor: ^1.0.0
 ```
 
 Then run:
