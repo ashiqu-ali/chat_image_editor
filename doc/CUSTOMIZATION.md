@@ -25,6 +25,7 @@ The widget also takes `onComplete` and `onCancel` (see
 
 Contents:
 
+- [Where things appear](#where-things-appear)
 - [Theme](#theme)
 - [Icons](#icons)
 - [Strings](#strings)
@@ -35,6 +36,23 @@ Contents:
 - [Export options](#export-options)
 - [Controller](#controller)
 - [Embedding](#embedding)
+
+## Where things appear
+
+The tables below refer to these parts of the editor:
+
+| Screen | What it shows |
+|---|---|
+| Preview (no tool open) | Top bar: close on the left; undo, redo and the tool buttons on the right. Bottom: the caption field, with the recipient chip (`CaptionFieldConfig.header`) and the send button below it. In done mode, a single done button. |
+| Draw | The top bar morphs: close becomes a **Done** pill, and the tools fold into undo plus a swatch of the pen color (tap it, or Done, to stop drawing). A vertical gradient color slider runs down the right edge. The bottom shows the shape picker and the brush size slider. |
+| Text entry | A dimmed overlay with a **Done** pill, the text background toggle and the same color slider. |
+| Crop | Aspect-ratio chips, then one bottom row: cancel, rotate left, rotate right, flip horizontally, flip vertically, reset and confirm. |
+| Compress | A bottom sheet: title, the quality (`Low · 40`, `Medium · 70`, `High · 90`) with a slider in steps of 10, the original size, a live size estimate and an **Apply** button. Tapping outside the sheet closes it without changing anything. |
+| Close with unsaved edits | A discard confirmation. It's platform-adaptive: a Cupertino alert on iOS and macOS, a Material dialog elsewhere. |
+
+While a stroke is being drawn or a text layer is being moved, the chrome
+fades out so the photo stays in view. The bottom controls sit on a scrim
+(`scrimColor`) that fades up into the photo.
 
 ## Theme
 
@@ -91,9 +109,9 @@ photos stand out. Only the accents follow your `ColorScheme`. Setting
 | `onPrimaryColor` | Content on top of `primaryColor`. | `ColorScheme.onPrimary` |
 | `backgroundColor` | Editor background around the image. | Black |
 | `foregroundColor` | Icons and labels drawn over the editor background. | White |
-| `toolbarBackgroundColor` | Circular backdrop behind top-bar buttons, for contrast on bright photos. | Black, 35% |
-| `activeToolColor` | Highlight on the selected tool and shape. | `primaryColor` |
-| `scrimColor` | Dim layer behind the text entry overlay. | Black, 60% |
+| `toolbarBackgroundColor` | Backdrop behind the editor's buttons, the **Done** pill, unselected aspect-ratio chips and the recipient chip, for contrast on bright photos. | Black, 54% |
+| `activeToolColor` | Icon color of the selected tool and shape, and the selected aspect-ratio chip. | `primaryColor` |
+| `scrimColor` | Dim layer behind the text entry overlay, and the gradient under the bottom controls. | Black, 60% |
 | `cropFrameColor` | Crop frame border. | White |
 | `cropHandleColor` | Crop corner handles. | White |
 | `cropGridColor` | Rule-of-thirds grid inside the crop frame. | White, 50% |
@@ -104,27 +122,29 @@ photos stand out. Only the accents follow your `ColorScheme`. Setting
 | `deleteTargetColor` | Drag-to-delete target at rest. | Black, 54% |
 | `deleteTargetActiveColor` | Drag-to-delete target while a text layer is over it. | `ColorScheme.error` |
 | `guideLineColor` | Center snap guides shown while moving text. | `primaryColor` |
-| `captionFillColor` | Caption field fill. | Dark grey `#262626` |
+| `captionFillColor` | Caption field fill. Translucent, so the photo shows through. | Black, 54% |
 | `captionTextColor` | Caption text. | White |
 | `captionHintColor` | Caption hint. | White, 60% |
-| `sendButtonColor` | Send and done button background. | `primaryColor` |
-| `sendButtonForegroundColor` | Send and done button icon, and their busy spinner. | `onPrimaryColor` |
+| `sendButtonColor` | Send and done button background, and the compress sheet's **Apply** button. | `primaryColor` |
+| `sendButtonForegroundColor` | Send and done button icon, their busy spinner, and the **Apply** label. | `onPrimaryColor` |
 | `sendButtonDisabledColor` | Send button background while disabled. | Grey `#5C5C5C` |
 | `sheetBackgroundColor` | Background of bottom sheets, such as the compress sheet. | Near-black `#1E1E1E` |
 | `sheetForegroundColor` | Text and icons on bottom sheets. | White |
-| `defaultDrawColor` | First color of the draw tool. | `primaryColor` |
+| `defaultDrawColor` | First pen color, shown in the pen-color swatch. | `primaryColor` |
 | `defaultTextColor` | First color of the text tool. | White |
 | `loadingIndicatorColor` | Image loading indicator. The send button's busy spinner uses `sendButtonForegroundColor`. | `primaryColor` |
-| `palette` | Colors in the color strip, top to bottom. | `ChatImageEditorThemeData.defaultPalette` |
+| `palette` | Stops of the vertical gradient color slider, top to bottom. | `ChatImageEditorThemeData.defaultPalette` |
 
 `defaultPalette` is white, black, red, orange, yellow, green, cyan, blue,
-purple and pink.
+purple and pink. The color slider blends between neighbouring stops, so the
+user can pick any color along the gradient; each stop is picked exactly at
+its own position.
 
 ### Text styles
 
 | Field | What it styles | Default |
 |---|---|---|
-| `labelStyle` | Small labels, such as aspect-ratio chips. | `TextTheme.labelLarge` in `foregroundColor` |
+| `labelStyle` | Small labels: aspect-ratio chips, the **Done** pill, the recipient chip and the **Apply** button. | `TextTheme.labelLarge` in `foregroundColor` |
 | `captionStyle` | Typed caption text. | `TextTheme.bodyLarge` in `captionTextColor` |
 | `sheetTitleStyle` | Bottom sheet titles. | `TextTheme.titleMedium` in `sheetForegroundColor` |
 | `sheetBodyStyle` | Bottom sheet body text. | `TextTheme.bodyMedium` in `sheetForegroundColor` |
@@ -187,10 +207,10 @@ ChatImageEditor.open(
 
 | Field | Where it appears | Default |
 |---|---|---|
-| `close` | Closes the editor. | `Icons.close` |
-| `undo` | Undo button. | `Icons.undo` |
+| `close` | Closes the editor (top bar, outside drawing). | `Icons.close` |
+| `undo` | Undo button, in the top bar and while drawing. | `Icons.undo` |
 | `redo` | Redo button. | `Icons.redo` |
-| `draw` | Draw tool button. | `Icons.edit_outlined` |
+| `draw` | Draw tool button, and the icon on the pen-color swatch while drawing. | `Icons.edit_outlined` |
 | `text` | Text tool button. | `Icons.title` |
 | `crop` | Crop tool button. | `Icons.crop_rotate` |
 | `compress` | Compress tool button. | `Icons.hd_outlined` |
@@ -199,8 +219,8 @@ ChatImageEditor.open(
 | `flipHorizontal` | Mirror left-right. | `Icons.flip` |
 | `flipVertical` | Mirror top-bottom. | `Icons.flip`, turned a quarter turn |
 | `resetCrop` | Reset crop, rotation and flips. | `Icons.restart_alt` |
-| `confirm` | Confirm the crop. | `Icons.check` |
-| `cancel` | Cancel the crop. | `Icons.close` |
+| `confirm` | Confirm the crop, at the end of the crop row. | `Icons.check` |
+| `cancel` | Cancel the crop, at the start of the crop row. | `Icons.close` |
 | `send` | Send button (send mode). | `Icons.send` |
 | `done` | Done button (done mode). | `Icons.check` |
 | `delete` | Drag-to-delete target. | `Icons.delete_outline` |
@@ -240,6 +260,8 @@ ChatImageEditorStrings stringsFor(Locale locale) {
         cancel: 'Annuler',
         confirm: 'OK',
         done: 'OK',
+        apply: 'Appliquer',
+        color: 'Couleur',
       );
     default:
       return const ChatImageEditorStrings();
@@ -266,7 +288,7 @@ way, filling each field from your localization class.
 | `close` | Close button tooltip. | `Close` |
 | `undo` | Undo button tooltip. | `Undo` |
 | `redo` | Redo button tooltip. | `Redo` |
-| `draw` | Draw tool tooltip. | `Draw` |
+| `draw` | Draw tool tooltip, and the pen-color swatch's tooltip while drawing. | `Draw` |
 | `text` | Text tool tooltip. | `Text` |
 | `crop` | Crop tool tooltip. | `Crop and rotate` |
 | `compress` | Compress tool tooltip and sheet title. | `Image quality` |
@@ -274,12 +296,12 @@ way, filling each field from your localization class.
 | `rotateRight` | Rotate-right tooltip. | `Rotate right` |
 | `flipHorizontal` | Flip-horizontal tooltip. | `Flip horizontally` |
 | `flipVertical` | Flip-vertical tooltip. | `Flip vertically` |
-| `resetCrop` | Reset-crop label. | `Reset` |
+| `resetCrop` | Reset-crop tooltip. | `Reset` |
 | `freeAspectRatio` | Label of the free (unconstrained) crop preset. | `Free` |
-| `confirm` | Crop confirm label. | `Done` |
-| `cancel` | Crop cancel label. | `Cancel` |
+| `confirm` | Crop confirm tooltip. | `Done` |
+| `cancel` | Crop cancel tooltip. | `Cancel` |
 | `send` | Send button tooltip. | `Send` |
-| `done` | Done button tooltip. | `Done` |
+| `done` | Done button tooltip (done mode), and the **Done** pill that ends drawing and text entry. | `Done` |
 | `delete` | Delete target semantics label. | `Delete` |
 | `textBackground` | Text background button tooltip. | `Text background` |
 | `strokeWidth` | Brush size slider semantics label. | `Brush size` |
@@ -288,7 +310,7 @@ way, filling each field from your localization class.
 | `rectangle` | Rectangle shape tooltip. | `Rectangle` |
 | `circle` | Circle shape tooltip. | `Circle` |
 | `arrow` | Arrow shape tooltip. | `Arrow` |
-| `qualityLabel` | Quality slider label. | `Quality` |
+| `qualityLabel` | Label of the quality row in the compress sheet, and the slider's semantics label. | `Quality` |
 | `originalSizeLabel` | Label before the original file size. | `Original` |
 | `estimatedSizeLabel` | Label before the estimated file size. | `Estimated size` |
 | `estimatingSize` | Shown while the size estimate is computed. | `Calculating…` |
@@ -298,8 +320,11 @@ way, filling each field from your localization class.
 | `keepEditing` | Discard dialog cancel button. | `Keep editing` |
 | `loadFailed` | Shown when the source image can't be decoded. | `Couldn't open this image.` |
 | `exportFailed` | Shown when export fails. | `Couldn't prepare this image. Please try again.` |
+| `color` | Semantics label of the color slider. | `Color` |
+| `apply` | Compress sheet button that keeps the chosen quality. | `Apply` |
 | `formatBytes` | Formats file sizes in the compress sheet. | `ChatImageEditorStrings.defaultFormatBytes` |
-| `colorLabel` | Screen reader label of each color strip swatch. | `ChatImageEditorStrings.defaultColorLabel` (`Color 3 of 10`) |
+| `colorLabel` | Screen reader name of the palette color closest to the color slider's position. | `ChatImageEditorStrings.defaultColorLabel` (`Color 3 of 10`) |
+| `formatQuality` | Describes the quality in the compress sheet. | `ChatImageEditorStrings.defaultFormatQuality` (`Low · 40`, `Medium · 70`, `High · 90`) |
 
 ### Formatting file sizes
 
@@ -315,19 +340,41 @@ ChatImageEditorStrings(
 
 ### Naming colors for screen readers
 
-`colorLabel` is a `String Function(Color color, int index, int count)` that
-names each swatch of the color strip. `index` is zero-based. The default
+Screen readers see the color slider as a slider labelled `color` that steps
+through the palette: increasing or decreasing it moves to the next or
+previous palette color. Its value is `colorLabel`, a
+`String Function(Color color, int index, int count)` that names the palette
+color closest to the slider's position. `index` is zero-based. The default
 reads `Color 3 of 10`. Translate it, or name your palette's colors:
 
 ```dart
 ChatImageEditorStrings(
+  color: 'Couleur',
   colorLabel: (color, index, count) => 'Couleur ${index + 1} sur $count',
+);
+```
+
+### Describing quality
+
+`formatQuality` is a `String Function(int quality)` that describes the JPEG
+quality in the compress sheet. The default names a tier and the value:
+`Low · 40` (up to 40), `Medium · 70` (41 to 75) and `High · 90` (above 75).
+Translate the tiers or show a percentage instead:
+
+```dart
+ChatImageEditorStrings(
+  formatQuality: (quality) => switch (quality) {
+    <= 40 => 'Basse · $quality',
+    <= 75 => 'Moyenne · $quality',
+    _ => 'Haute · $quality',
+  },
 );
 ```
 
 ## Caption field
 
-In send mode the bottom bar shows a caption `TextFormField` inside a `Form`.
+In send mode the bottom bar shows a caption `TextFormField` inside a `Form`,
+with the recipient chip (`header`) and the send button in a row below it.
 `CaptionFieldConfig` maps onto the matching `TextFormField` parameters. Leave
 a field `null` for the themed default.
 
@@ -354,7 +401,7 @@ ChatImageEditor.open(
 
 | Option | Type | Default | What it does |
 |---|---|---|---|
-| `enabled` | `bool` | `true` | Shows the caption field. When `false`, only the send button shows. |
+| `enabled` | `bool` | `true` | Shows the caption field. When `false`, only the send button shows (no field, no header chip). |
 | `controller` | `TextEditingController?` | `null` | Controls the caption text. When `null`, the editor owns one. |
 | `focusNode` | `FocusNode?` | `null` | Focus node for the field. |
 | `initialValue` | `String?` | `null` | Starting caption when no `controller` is given. Don't pass both. |
@@ -372,7 +419,7 @@ ChatImageEditor.open(
 | `autovalidateMode` | `AutovalidateMode?` | `null` | When to run the validator. |
 | `onChanged` | `ValueChanged<String>?` | `null` | Called on every change. |
 | `autofocus` | `bool` | `false` | Focuses the field when the editor opens. It doesn't take focus again when the field reappears after a tool closes. |
-| `header` | `Widget?` | `null` | Widget shown above the field, such as the recipient's name. |
+| `header` | `Widget?` | `null` | Shown in a translucent chip below the field, beside the send button, such as the recipient's name. Long text is cut to one line with an ellipsis. |
 
 The caption arrives trimmed in `ChatImageEditorResult.caption`. A typed
 caption counts as unsaved work for the discard prompt.
@@ -386,7 +433,7 @@ const CaptionFieldConfig(
   decoration: InputDecoration(
     hintText: 'Say something…',
     filled: true,
-    fillColor: Color(0xFF262626),
+    fillColor: Color(0x8A000000), // the default: black, 54%
     border: OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(12)),
       borderSide: BorderSide.none,
@@ -402,13 +449,13 @@ uses the built-in, themed widget.
 
 | Builder | Type | Replaces |
 |---|---|---|
-| `topBar` | `EditorRegionBuilder?` | The top bar: close, undo/redo and tool buttons. |
-| `bottomBar` | `EditorRegionBuilder?` | The whole bottom area: caption and send button, or the done button. |
+| `topBar` | `EditorRegionBuilder?` | The top bar: close, undo/redo and tool buttons, including the morphing pen-mode bar (**Done** pill, undo, pen-color swatch). |
+| `bottomBar` | `EditorRegionBuilder?` | The caption area: caption field, recipient chip and send button, or the done button. The draw tool's shape picker and brush size slider still show while drawing. |
 | `sendButton` | `SendButtonBuilder?` | The send button (send mode). |
 | `doneButton` | `SendButtonBuilder?` | The done button (done mode). |
 | `loading` | `WidgetBuilder?` | The view shown while the image decodes. |
 | `error` | `EditorErrorBuilder?` | The view shown when the image can't be decoded. |
-| `confirmDiscard` | `DiscardConfirmation?` | The "discard changes?" dialog. |
+| `confirmDiscard` | `DiscardConfirmation?` | The platform-adaptive "discard changes?" dialog. |
 
 The typedefs:
 
@@ -507,8 +554,11 @@ ChatImageEditorBuilders(
 );
 ```
 
-A custom `topBar` replaces the built-in close, undo/redo and tool buttons,
-so include whatever your users need.
+A custom `topBar` replaces the built-in close, undo/redo and tool buttons in
+every mode, including while drawing, so include whatever your users need.
+The built-in bar morphs while the draw tool is open; a custom one can do the
+same by checking `controller.activeTool == EditorTool.draw` and offering a
+way out with `controller.closeTool()`.
 
 A custom `bottomBar` replaces the caption field and the send button, so it
 has to finish on its own: call `controller.export(caption: …)` and deliver
@@ -545,7 +595,14 @@ ChatImageEditorBuilders(
 
 `confirmDiscard` runs only when `config.confirmDiscard` is `true` (the
 default) and there are unsaved edits or a caption. Return `true` to close the
-editor.
+editor. It runs for the close button and for the system back gesture once no
+tool or text entry is open (back first closes those).
+
+The built-in dialog is platform-adaptive: a Cupertino alert on iOS and
+macOS, a Material dialog elsewhere. It uses `discardTitle`,
+`discardMessage`, `discardConfirm` and `keepEditing` from the strings, so
+most apps only need to translate those. Supply `confirmDiscard` when you want
+a different look, such as your app's own dialog or a bottom sheet.
 
 ## Send button behaviour
 
@@ -605,14 +662,15 @@ text are not here; they live in the theme, icons and strings.
 | `previewMaxLongEdge` | `2048` | Longest side, in pixels, of the image decoded for editing. Affects preview sharpness and memory only. |
 | `defaultStrokeWidth` | `0.008` | Starting brush size, as a fraction of the image's shortest side. |
 | `minStrokeWidth` | `0.002` | Smallest brush size the slider allows. |
-| `maxStrokeWidth` | `0.03` | Largest brush size the slider allows. |
+| `maxStrokeWidth` | `0.03` | Largest brush size the slider allows. Set it equal to `minStrokeWidth` to hide the slider. |
 | `defaultFontSize` | `0.06` | Starting text size, as a fraction of the image's shortest side. |
 | `minFontSize` | `0.02` | Smallest text size pinching allows. |
 | `maxFontSize` | `0.25` | Largest text size pinching allows. |
 | `confirmDiscard` | `true` | Asks before discarding unsaved edits or a caption on close. |
 | `enableZoom` | `true` | Allows pinch-to-zoom while no tool is open. |
 | `enableHaptics` | `true` | Light haptic feedback on snaps and the delete target. |
-| `showUndoRedo` | `true` | Shows undo and redo buttons in the top bar. |
+| `showUndoRedo` | `true` | Shows undo and redo buttons in the top bar, and undo in the pen-mode bar. |
+| `hideSystemBarsWhileDrawing` | `false` | Opt-in. Hides the system status and navigation bars while the draw tool is open, so the whole screen is canvas. |
 
 The tools are `EditorTool.draw`, `text`, `crop` and `compress`. The shapes
 are `ShapeType.freehand`, `line`, `rectangle`, `circle` and `arrow`.
@@ -656,10 +714,11 @@ not from the preview.
 
 ### Fitting a size limit
 
-With `maxBytes` set, JPEG quality steps down, never below `minQuality`,
-until the file fits. If it still doesn't fit, the result holds the smallest
-attempt and `exceedsMaxBytes` is `true`. Lowering `maxLongEdge` too makes
-fitting much easier:
+With `maxBytes` set, JPEG quality steps down in steps of 10, never below
+`minQuality`, until the file fits: from quality 90 with the default
+`minQuality` 30 it tries 80, 70, 60, 50, 40 and 30. If it still doesn't
+fit, the result holds the smallest attempt and `exceedsMaxBytes` is `true`.
+Lowering `maxLongEdge` too makes fitting much easier:
 
 ```dart
 final result = await ChatImageEditor.open(
@@ -673,6 +732,16 @@ if (result != null && result.exceedsMaxBytes) {
   // Still too big: warn the user or upload anyway.
 }
 ```
+
+### The compress sheet
+
+The compress tool lets the user pick the quality: a slider from 10 to 100 in
+steps of 10, labelled with `strings.formatQuality` (`Low · 40`,
+`Medium · 70`, `High · 90`), the original size and a live estimate of the new
+size. The slider is a draft until the user taps **Apply**, which records the
+quality as one undo step; tapping outside the sheet closes it without
+changing anything. The applied quality replaces `ExportOptions.quality`, and
+a `maxBytes` search starts from it.
 
 Quality applies to JPEG only. If you export PNG you may want to remove
 `EditorTool.compress` from `config.tools`.

@@ -26,6 +26,12 @@ GitHub Actions when a version tag is pushed.
    for f in ../doc/screenshots/*.png; do sips -Z 1080 "$f"; done  # macOS
    ```
 
+   The README's preview GIFs live in `doc/gifs/` (`chat.gif`, `draw.gif`,
+   `text.gif`, `crop.gif`, `compress.gif`). The README loads them from
+   GitHub's raw URLs on `main`, and `.pubignore` keeps them out of the
+   published package, so re-record them only when the UI changed and keep
+   the file names.
+
 2. Open a PR titled `chore: release X.Y.Z` that:
    - sets `version: X.Y.Z` in `pubspec.yaml`,
    - renames `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z]` and adds a
