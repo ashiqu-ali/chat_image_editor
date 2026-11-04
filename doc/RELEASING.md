@@ -42,8 +42,10 @@ publish.
 
 2. Open a PR titled `chore: release X.Y.Z` that:
    - sets `version: X.Y.Z` in `pubspec.yaml`,
-   - renames `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z]` and adds a
-     fresh empty `## [Unreleased]` above it.
+   - renames `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`
+     (the release date) and adds a `[X.Y.Z]` link to the GitHub release at
+     the bottom. The next change adds a new `## [Unreleased]` heading at the
+     top.
 
    Squash-merge it into `main`.
 
