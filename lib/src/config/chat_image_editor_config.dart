@@ -81,7 +81,8 @@ class ChatImageEditorConfig {
   /// Allow pinch-to-zoom while no tool is open.
   final bool enableZoom;
 
-  /// Play light haptic feedback on snaps and the delete target.
+  /// Play light haptic feedback when an alignment guide appears, a color is
+  /// picked and a layer is over the delete target.
   final bool enableHaptics;
 
   /// Show undo and redo buttons in the top bar.
