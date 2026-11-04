@@ -2,8 +2,9 @@ name: Publish to pub.dev
 
 # Publishes when a version tag like v1.2.3 is pushed, usually by creating a
 # GitHub release on main. Uses pub.dev's automated publishing (GitHub OIDC),
-# so no secrets are stored. The `pub.dev` environment waits for a
-# maintainer's approval before this job runs.
+# so no secrets are stored. Only tags on main are published, and a version
+# that's already on pub.dev (for example the first, hand-published one) is
+# skipped.
 on:
   push:
     tags:
@@ -44,4 +45,14 @@ jobs:
             echo "::error::Tag $GITHUB_REF_NAME doesn't match pubspec version $version"
             exit 1
           fi
-      - run: flutter pub publish --force
+      - name: Skip a version that's already on pub.dev
+        id: published
+        run: |
+          version=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')
+          url="https://pub.dev/api/packages/chat_image_editor/versions/$version"
+          if curl -fsS -o /dev/null "$url"; then
+            echo "::notice::chat_image_editor $version is already on pub.dev; nothing to publish."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.published.outputs.exists != 'true'
+        run: flutter pub publish --force

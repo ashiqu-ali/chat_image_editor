@@ -1,13 +1,20 @@
 # Releasing
 
-Day-to-day work lands on `develop`. A release merges `develop` into `main`,
-then a GitHub release on `main` creates the version tag, and GitHub Actions
-publishes that tag to pub.dev after a maintainer approves it.
+Work lands on `main` through squash-merged PRs. A GitHub release on `main`
+creates the version tag, and GitHub Actions publishes that tag to pub.dev.
+The tag starts the publish, never the other way round: publishing (by hand
+or by the workflow) doesn't create a tag, and merging a PR doesn't publish.
 
 ```
-feature branch ──PR──► develop ──release PR──► main ──GitHub release vX.Y.Z──► pub.dev
-                 squash                merge commit       tag on main     (approval)
+feature branch ──PR (squash)──► main ──GitHub release vX.Y.Z──► tag ──► pub.dev
 ```
+
+Every release needs a new `version:` in `pubspec.yaml`; pub.dev refuses a
+version that was already published.
+
+After the first release, the plan is to add a `develop` branch for
+day-to-day work, release by merging `develop` into `main`, and require a
+maintainer's approval in the `pub.dev` environment before publishing.
 
 Publishing is safe by construction:
 
@@ -15,10 +22,10 @@ Publishing is safe by construction:
   pub.dev secret stored anywhere.
 - pub.dev only accepts publishes from this repository, from tags matching
   `v{{version}}`, and from the `pub.dev` environment.
-- The `pub.dev` environment only deploys `v*` tags and waits for a
-  maintainer's approval.
+- The `pub.dev` environment can be limited to `v*` tags and set to wait
+  for a maintainer's approval.
 - The workflow refuses a tag that isn't on `main` or doesn't match the
-  `pubspec.yaml` version.
+  `pubspec.yaml` version, and skips a version that's already on pub.dev.
 
 ## One-time setup
 
@@ -28,9 +35,12 @@ Publishing is safe by construction:
    - Repository: `ashiqu-ali/chat_image_editor`
    - Tag pattern: `v{{version}}`
    - Require the GitHub Actions environment: `pub.dev`
-3. In the GitHub repository, the environment `pub.dev` (Settings →
-   Environments) requires a maintainer's approval and only deploys `v*`
-   tags.
+3. In the GitHub repository, create an environment named `pub.dev`
+   (Settings → Environments), limit it to `v*` tags and, optionally,
+   require your approval for it.
+4. Tag the hand-published version so git and pub.dev agree: create a GitHub
+   release `vX.Y.Z` on the commit you published. The publish workflow runs,
+   sees the version is already on pub.dev and stops without publishing.
 
 ## Each release
 
@@ -50,23 +60,18 @@ Publishing is safe by construction:
    published package, so re-record them only when the UI changed and keep
    the file names.
 
-2. On `develop`, open a PR titled `chore: release X.Y.Z` that:
+2. Open a PR titled `chore: release X.Y.Z` that:
    - sets `version: X.Y.Z` in `pubspec.yaml`,
    - renames `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z]` and adds a
      fresh empty `## [Unreleased]` above it.
 
-   Squash-merge it into `develop`.
-3. Open a PR from `develop` into `main` titled `chore: release X.Y.Z` and
-   merge it with **Create a merge commit**, so `main` and `develop` keep the
-   same history. Don't squash or rebase this one.
-4. On GitHub, **Releases → Draft a new release**: target `main`, create the
+   Squash-merge it into `main`.
+3. On GitHub, **Releases → Draft a new release**: target `main`, create the
    tag `vX.Y.Z`, use **Generate release notes** (grouped by PR labels, see
    `.github/release.yml`) and publish the release. Creating the release
    pushes the tag.
-5. The **Publish to pub.dev** workflow starts, waits for your approval in
-   the `pub.dev` environment (Actions → the run → **Review deployments**),
-   checks that the tag is on `main` and matches the pubspec version, and
-   publishes.
-
-A hotfix follows the same path: fix on `develop`, release PR into `main`.
-If you ever commit to `main` directly, merge `main` back into `develop`.
+4. The **Publish to pub.dev** workflow starts (waiting for your approval
+   if the `pub.dev` environment requires it: Actions → the run → **Review
+   deployments**), checks that the tag is on `main` and matches the pubspec
+   version, and publishes. A few minutes later the version is live on
+   pub.dev.
