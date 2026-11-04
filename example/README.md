@@ -87,7 +87,7 @@ fvm flutter drive --driver=test_driver/perf_driver.dart \
   --target=integration_test/editor_performance_test.dart --profile -d <device>
 ```
 
-See [docs/PERFORMANCE.md](../docs/PERFORMANCE.md) for what the summaries
+See [doc/PERFORMANCE.md](../doc/PERFORMANCE.md) for what the summaries
 mean.
 
 ## Platform setup for image_picker

@@ -35,7 +35,7 @@ cd example && fvm flutter analyze && fvm flutter test
 ```
 
 For performance-sensitive changes also run the benchmarks; see
-[docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+[doc/PERFORMANCE.md](doc/PERFORMANCE.md).
 
 ## Code style
 
@@ -46,7 +46,7 @@ For performance-sensitive changes also run the benchmarks; see
   `pubspec.yaml`; the minimum-Flutter CI job catches this.
 - Widgets never hard-code colors, icons or user-facing strings; they come
   from the theme, icon and string classes so apps can customize them.
-- See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for where code belongs.
+- See [doc/ARCHITECTURE.md](doc/ARCHITECTURE.md) for where code belongs.
 
 ## How pull requests are handled
 
@@ -109,7 +109,7 @@ The PR's labels decide where it appears in the release notes.
 
 The package follows [semantic versioning](https://dart.dev/tools/pub/versioning).
 Before 1.0, breaking changes bump the minor version (`0.1.x` → `0.2.0`).
-Maintainers release from `main`; see [docs/RELEASING.md](docs/RELEASING.md).
+Maintainers release from `main`; see [doc/RELEASING.md](doc/RELEASING.md).
 
 ## Commit messages
 
