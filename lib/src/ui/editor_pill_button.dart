@@ -32,6 +32,9 @@ class EditorPillButton extends StatelessWidget {
       child: Semantics(
         button: true,
         label: label,
+        // The child's semantics are excluded, tap action included, so the
+        // button carries its own.
+        onTap: onPressed,
         excludeSemantics: true,
         child: InkResponse(
           onTap: onPressed,

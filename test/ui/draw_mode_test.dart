@@ -205,6 +205,28 @@ void main() {
       expect(iconColor('Arrow'), theme.foregroundColor);
     });
 
+    testWidgets('draw: the brush size is one labelled slider', (tester) async {
+      final semantics = tester.ensureSemantics();
+      final controller = await _openDraw(tester);
+
+      final brush = find.semantics.byLabel('Brush size');
+      expect(
+        brush.evaluate().single,
+        containsSemantics(
+          label: 'Brush size',
+          isSlider: true,
+          hasIncreaseAction: true,
+          hasDecreaseAction: true,
+        ),
+      );
+
+      final before = controller.strokeWidth;
+      tester.semantics.increase(brush);
+      await tester.pump();
+      expect(controller.strokeWidth, greaterThan(before));
+      semantics.dispose();
+    });
+
     testWidgets('draw: the chrome fades out while a stroke is drawn', (
       tester,
     ) async {
@@ -340,6 +362,22 @@ void main() {
       expect(find.byType(EditorPillButton), findsNothing);
       expect(find.byType(ColorStrip), findsNothing);
       expect(find.byType(TextFormField), findsOneWidget);
+    });
+
+    testWidgets('screen readers can tap the Done pill', (tester) async {
+      final semantics = tester.ensureSemantics();
+      final controller = await _openDraw(tester);
+
+      final done = find.semantics.byLabel('Done');
+      expect(
+        done.evaluate().single,
+        containsSemantics(label: 'Done', isButton: true, hasTapAction: true),
+      );
+      tester.semantics.tap(done);
+      await tester.pumpAndSettle();
+
+      expect(controller.activeTool, EditorTool.none);
+      semantics.dispose();
     });
 
     testWidgets('the pen swatch ends drawing', (tester) async {
