@@ -2,18 +2,25 @@ import 'package:chat_image_editor/chat_image_editor.dart';
 import 'package:chat_image_editor_example/src/app.dart';
 import 'package:chat_image_editor_example/src/app_settings.dart';
 import 'package:chat_image_editor_example/src/demos/demo.dart';
-import 'package:chat_image_editor_example/src/home_screen.dart';
+import 'package:chat_image_editor_example/src/demos_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Opens the demos screen from the chat's app bar.
+Future<void> openDemos(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Customization demos'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
-  testWidgets('home screen lists every demo without opening the editor', (
+  testWidgets('demos screen lists every demo without opening the editor', (
     tester,
   ) async {
     await tester.pumpWidget(const ExampleApp());
     await tester.pumpAndSettle();
+    await openDemos(tester);
 
-    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byType(DemosScreen), findsOneWidget);
     expect(find.text('Sample image'), findsOneWidget);
     expect(find.text('Gallery'), findsOneWidget);
 
@@ -32,6 +39,7 @@ void main() {
 
     await tester.pumpWidget(ExampleApp(settings: settings));
     await tester.pumpAndSettle();
+    await openDemos(tester);
 
     ThemeData currentTheme() => Theme.of(tester.element(find.byType(AppBar)));
 

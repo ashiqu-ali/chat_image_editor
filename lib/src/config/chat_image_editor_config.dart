@@ -31,6 +31,7 @@ class ChatImageEditorConfig {
     this.enableZoom = true,
     this.enableHaptics = true,
     this.showUndoRedo = true,
+    this.hideSystemBarsWhileDrawing = false,
   }) : assert(previewMaxLongEdge > 0),
        assert(minStrokeWidth > 0 && minStrokeWidth <= maxStrokeWidth),
        assert(minFontSize > 0 && minFontSize <= maxFontSize);
@@ -80,11 +81,21 @@ class ChatImageEditorConfig {
   /// Allow pinch-to-zoom while no tool is open.
   final bool enableZoom;
 
-  /// Play light haptic feedback on snaps and the delete target.
+  /// Play light haptic feedback when an alignment guide appears, a color is
+  /// picked and a layer is over the delete target.
   final bool enableHaptics;
 
   /// Show undo and redo buttons in the top bar.
   final bool showUndoRedo;
+
+  /// Hide the status and navigation bars while the draw tool is open, so
+  /// the photo gets the whole screen.
+  ///
+  /// Both bars come back when drawing ends or the editor closes. Off by
+  /// default, because system UI is app-wide state. Uses
+  /// `SystemUiMode.manual`, which Android ignores for apps that target API 36
+  /// or later.
+  final bool hideSystemBarsWhileDrawing;
 
   /// Returns a copy with the given fields replaced.
   ChatImageEditorConfig copyWith({
@@ -104,6 +115,7 @@ class ChatImageEditorConfig {
     bool? enableZoom,
     bool? enableHaptics,
     bool? showUndoRedo,
+    bool? hideSystemBarsWhileDrawing,
   }) {
     return ChatImageEditorConfig(
       mode: mode ?? this.mode,
@@ -122,6 +134,8 @@ class ChatImageEditorConfig {
       enableZoom: enableZoom ?? this.enableZoom,
       enableHaptics: enableHaptics ?? this.enableHaptics,
       showUndoRedo: showUndoRedo ?? this.showUndoRedo,
+      hideSystemBarsWhileDrawing:
+          hideSystemBarsWhileDrawing ?? this.hideSystemBarsWhileDrawing,
     );
   }
 }

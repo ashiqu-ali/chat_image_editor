@@ -40,7 +40,10 @@ typedef EditorErrorBuilder =
     Widget Function(BuildContext context, Object error);
 
 /// Asks the user whether to discard unsaved edits. Return `true` to
-/// discard.
+/// discard and close the editor, `false` to keep editing.
+///
+/// [context] is below the editor's `ChatImageEditorScope`, so
+/// `ChatImageEditorScope.of(context)` gives the editor's theme and strings.
 typedef DiscardConfirmation = Future<bool> Function(BuildContext context);
 
 /// Optional builders that replace parts of the editor UI.
@@ -79,5 +82,40 @@ class ChatImageEditorBuilders {
   final EditorErrorBuilder? error;
 
   /// Replaces the discard confirmation dialog.
+  ///
+  /// Called when the user closes the editor with unsaved edits or a caption
+  /// and `ChatImageEditorConfig.confirmDiscard` is `true`. The default is
+  /// adaptive: it follows `Theme.of(context).platform` and shows a
+  /// `CupertinoAlertDialog` on iOS and macOS and a Material `AlertDialog`
+  /// everywhere else, with the texts from `ChatImageEditorStrings`.
+  ///
+  /// A builder fully replaces it, for example to always show a Material
+  /// dialog:
+  ///
+  /// ```dart
+  /// ChatImageEditorBuilders(
+  ///   confirmDiscard: (context) async {
+  ///     final strings = ChatImageEditorScope.of(context).strings;
+  ///     final discard = await showDialog<bool>(
+  ///       context: context,
+  ///       builder: (context) => AlertDialog(
+  ///         title: Text(strings.discardTitle),
+  ///         content: Text(strings.discardMessage),
+  ///         actions: [
+  ///           TextButton(
+  ///             onPressed: () => Navigator.of(context).pop(false),
+  ///             child: Text(strings.keepEditing),
+  ///           ),
+  ///           TextButton(
+  ///             onPressed: () => Navigator.of(context).pop(true),
+  ///             child: Text(strings.discardConfirm),
+  ///           ),
+  ///         ],
+  ///       ),
+  ///     );
+  ///     return discard ?? false;
+  ///   },
+  /// );
+  /// ```
   final DiscardConfirmation? confirmDiscard;
 }

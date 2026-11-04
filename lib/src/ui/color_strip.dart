@@ -5,12 +5,12 @@ import 'package:flutter/widgets.dart';
 import '../theme/chat_image_editor_scope.dart';
 import 'editor_haptics.dart';
 
-/// A vertical strip of swatches from `theme.palette`.
+/// A vertical gradient color slider through `theme.palette`.
 ///
-/// Tap a swatch, or drag along the strip to sweep through the colors. The
-/// strip shrinks its swatches to fit the height it's given. Screen readers
-/// see one labelled, selectable button per swatch.
-class ColorStrip extends StatelessWidget {
+/// Tap or drag along the strip to pick any color between the palette's
+/// stops; the thumb shows the current color. Screen readers get a slider
+/// that steps through the palette colors.
+class ColorStrip extends StatefulWidget {
   /// Creates a color strip.
   const ColorStrip({
     super.key,
@@ -18,123 +18,204 @@ class ColorStrip extends StatelessWidget {
     required this.onSelected,
   });
 
-  /// The current color; its swatch is enlarged.
+  /// The current color, shown in the thumb.
   final Color selected;
 
-  /// Called with the picked color.
+  /// Called with the picked color, continuously while dragging.
   final ValueChanged<Color> onSelected;
 
-  /// Width of the strip (and of its touch area).
+  /// Width of the strip's touch area.
   static const double width = 48;
 
-  /// Largest height of one swatch row.
-  static const double maxExtent = 32;
+  /// Width of the gradient bar.
+  static const double barWidth = 12;
+
+  /// Diameter of the thumb.
+  static const double thumbSize = 26;
+
+  /// Tallest the strip grows. It shrinks to the height it's given.
+  static const double maxHeight = 300;
+
+  /// The color at [t] along a gradient through [palette], from the first
+  /// color at `0` to the last at `1`. The palette's own colors are returned
+  /// exactly at their stops. [palette] must not be empty.
+  static Color colorAt(List<Color> palette, double t) {
+    assert(palette.isNotEmpty, 'The palette has no colors.');
+    if (palette.length == 1) return palette.first;
+    final position = t.clamp(0.0, 1.0) * (palette.length - 1);
+    // `i / (n - 1) * (n - 1)` can land a hair off `i`; snap to the stop.
+    final stop = position.round();
+    if ((position - stop).abs() < 1e-9) return palette[stop];
+    final index = math.min(position.floor(), palette.length - 2);
+    final local = position - index;
+    if (local <= 0) return palette[index];
+    if (local >= 1) return palette[index + 1];
+    return Color.lerp(palette[index], palette[index + 1], local)!;
+  }
+
+  /// Where along a gradient through [palette] the color closest to [color]
+  /// sits, from `0` to `1`. A palette color is found exactly at its stop;
+  /// any other color at the nearest point of the gradient.
+  static double positionOf(List<Color> palette, Color color) {
+    if (palette.length < 2) return 0;
+    for (var i = 0; i < palette.length; i++) {
+      if (palette[i] == color) return i / (palette.length - 1);
+    }
+    const samples = 240;
+    var best = 0.0;
+    var bestDistance = double.infinity;
+    for (var i = 0; i <= samples; i++) {
+      final t = i / samples;
+      final candidate = colorAt(palette, t);
+      final dr = candidate.r - color.r;
+      final dg = candidate.g - color.g;
+      final db = candidate.b - color.b;
+      final distance = dr * dr + dg * dg + db * db;
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = t;
+      }
+    }
+    return best;
+  }
+
+  @override
+  State<ColorStrip> createState() => _ColorStripState();
+}
+
+class _ColorStripState extends State<ColorStrip> {
+  /// The last position this strip picked, and the color it picked there.
+  /// While the selection is still that color the thumb stays exactly where
+  /// the finger left it, without searching the gradient.
+  double? _pickedAt;
+  Color? _picked;
+
+  double _position(List<Color> palette) {
+    final pickedAt = _pickedAt;
+    if (pickedAt != null && _picked == widget.selected) return pickedAt;
+    return ColorStrip.positionOf(palette, widget.selected);
+  }
+
+  void _pick(double t, List<Color> palette) {
+    final color = ColorStrip.colorAt(palette, t);
+    setState(() {
+      _pickedAt = t;
+      _picked = color;
+    });
+    if (color != widget.selected) widget.onSelected(color);
+  }
+
+  void _step(int index, List<Color> palette) {
+    final clamped = index.clamp(0, palette.length - 1);
+    _pick(clamped / math.max(1, palette.length - 1), palette);
+  }
 
   @override
   Widget build(BuildContext context) {
     final scope = ChatImageEditorScope.of(context);
-    final palette = scope.theme.palette;
+    final theme = scope.theme;
+    final strings = scope.strings;
+    final palette = theme.palette;
     if (palette.isEmpty) return const SizedBox.shrink();
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final available = constraints.maxHeight.isFinite
-            ? constraints.maxHeight / palette.length
-            : maxExtent;
-        final extent = math.max(12.0, math.min(maxExtent, available));
+            ? constraints.maxHeight
+            : ColorStrip.maxHeight;
+        final height = math.min(available, ColorStrip.maxHeight);
+        const thumb = ColorStrip.thumbSize;
+        if (height < thumb * 2) return const SizedBox.shrink();
+        final track = height - thumb;
+        final position = _position(palette);
+        final nearest = (position * (palette.length - 1)).round();
 
-        void select(Color color) {
-          if (color != selected) {
-            editorHaptic(enabled: scope.config.enableHaptics);
-            onSelected(color);
-          }
+        double toT(Offset local) =>
+            ((local.dy - thumb / 2) / track).clamp(0.0, 1.0);
+
+        String describe(int index) {
+          final i = index.clamp(0, palette.length - 1);
+          return strings.colorLabel(palette[i], i, palette.length);
         }
 
-        void pick(Offset local) {
-          final index = (local.dy / extent).floor().clamp(
-            0,
-            palette.length - 1,
-          );
-          select(palette[index]);
-        }
-
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          // Each swatch exposes its own tap action instead of the strip's
-          // position-based gestures.
-          excludeFromSemantics: true,
-          onTapDown: (details) => pick(details.localPosition),
-          onVerticalDragStart: (details) => pick(details.localPosition),
-          onVerticalDragUpdate: (details) => pick(details.localPosition),
-          child: SizedBox(
-            width: width,
-            height: extent * palette.length,
-            child: Column(
-              children: <Widget>[
-                for (var i = 0; i < palette.length; i++)
-                  SizedBox(
-                    height: extent,
-                    child: Center(
-                      child: _Swatch(
-                        color: palette[i],
-                        selected: palette[i] == selected,
-                        diameter: extent * 0.7,
-                        label: scope.strings.colorLabel(
-                          palette[i],
-                          i,
-                          palette.length,
+        return Semantics(
+          container: true,
+          slider: true,
+          label: strings.color,
+          value: describe(nearest),
+          increasedValue: nearest < palette.length - 1
+              ? describe(nearest + 1)
+              : null,
+          decreasedValue: nearest > 0 ? describe(nearest - 1) : null,
+          onIncrease: nearest < palette.length - 1
+              ? () => _step(nearest + 1, palette)
+              : null,
+          onDecrease: nearest > 0 ? () => _step(nearest - 1, palette) : null,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            excludeFromSemantics: true,
+            onTapDown: (details) {
+              editorHaptic(enabled: scope.config.enableHaptics);
+              _pick(toT(details.localPosition), palette);
+            },
+            onVerticalDragStart: (details) =>
+                _pick(toT(details.localPosition), palette),
+            onVerticalDragUpdate: (details) =>
+                _pick(toT(details.localPosition), palette),
+            child: SizedBox(
+              width: ColorStrip.width,
+              height: height,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: <Widget>[
+                  Positioned(
+                    top: thumb / 2,
+                    bottom: thumb / 2,
+                    left: (ColorStrip.width - ColorStrip.barWidth) / 2,
+                    width: ColorStrip.barWidth,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(ColorStrip.barWidth / 2),
                         ),
-                        onTap: () => select(palette[i]),
+                        border: Border.all(
+                          color: theme.foregroundColor.withValues(alpha: 0.6),
+                        ),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: palette.length == 1
+                              ? <Color>[palette.first, palette.first]
+                              : palette,
+                        ),
                       ),
                     ),
                   ),
-              ],
+                  Positioned(
+                    top: position * track,
+                    left: (ColorStrip.width - thumb) / 2,
+                    width: thumb,
+                    height: thumb,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: widget.selected,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.foregroundColor,
+                          width: 2.5,
+                        ),
+                        boxShadow: const <BoxShadow>[
+                          BoxShadow(color: Color(0x66000000), blurRadius: 4),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
       },
-    );
-  }
-}
-
-class _Swatch extends StatelessWidget {
-  const _Swatch({
-    required this.color,
-    required this.selected,
-    required this.diameter,
-    required this.label,
-    required this.onTap,
-  });
-
-  final Color color;
-  final bool selected;
-  final double diameter;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ChatImageEditorScope.of(context).theme;
-    final size = selected ? diameter * 1.3 : diameter;
-    return Semantics(
-      container: true,
-      selected: selected,
-      button: true,
-      label: label,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: theme.foregroundColor,
-            width: selected ? 3 : 1.5,
-          ),
-        ),
-      ),
     );
   }
 }

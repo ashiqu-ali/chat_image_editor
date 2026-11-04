@@ -6,13 +6,21 @@ import '../theme/chat_image_editor_scope.dart';
 import 'controller_selector.dart';
 import 'editor_icon_button.dart';
 
-/// Crop tool chrome: rotate, flip and reset at the top; aspect-ratio chips,
-/// cancel and confirm at the bottom.
+/// Crop tool chrome along the bottom: aspect-ratio chips, then one row with
+/// cancel, rotate, flip, reset and confirm.
 ///
 /// Fills the editor; empty areas let touches through to the crop frame.
+/// The controls are at most [height] tall above the safe area, which
+/// `EditorLayout.cropBottomInset` keeps clear of the frame's handles.
 class CropControls extends StatelessWidget {
   /// Creates the crop controls.
   const CropControls({super.key});
+
+  /// Height of the controls above the safe area: the chips row, the button
+  /// row and the bottom margin.
+  static const double height = 2 * EditorIconButton.hitSize + _bottomMargin;
+
+  static const double _bottomMargin = 8;
 
   /// A compact `w:h` label for [ratio], such as `16:9`.
   static String ratioLabel(double ratio) {
@@ -42,70 +50,64 @@ class CropControls extends StatelessWidget {
     final icons = scope.icons;
     final strings = scope.strings;
     final ratios = scope.config.cropAspectRatios;
+    // The view padding, like `EditorLayout.canvasPadding`, so the controls
+    // keep their distance from the frame while the keyboard hides.
+    final safe = MediaQuery.viewPaddingOf(context);
 
     return Stack(
       children: <Widget>[
         Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                children: <Widget>[
-                  EditorIconButton(
-                    icon: icons.rotateLeftIcon,
-                    tooltip: strings.rotateLeft,
-                    onPressed: controller.rotateLeft,
-                  ),
-                  EditorIconButton(
-                    icon: icons.rotateRightIcon,
-                    tooltip: strings.rotateRight,
-                    onPressed: controller.rotateRight,
-                  ),
-                  EditorIconButton(
-                    icon: icons.flipHorizontalIcon,
-                    tooltip: strings.flipHorizontal,
-                    onPressed: controller.flipHorizontal,
-                  ),
-                  EditorIconButton(
-                    icon: icons.flipVerticalIcon,
-                    tooltip: strings.flipVertical,
-                    onPressed: controller.flipVertical,
-                  ),
-                  EditorIconButton(
-                    icon: icons.resetCropIcon,
-                    tooltip: strings.resetCrop,
-                    onPressed: controller.resetCrop,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
           left: 0,
           right: 0,
           bottom: 0,
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  if (ratios.isNotEmpty) const _AspectRatioChips(),
-                  Row(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              safe.left + 4,
+              0,
+              safe.right + 4,
+              safe.bottom + _bottomMargin,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                if (ratios.isNotEmpty) const _AspectRatioChips(),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       EditorIconButton(
                         icon: icons.cancelIcon,
                         tooltip: strings.cancel,
                         onPressed: () => _cancel(controller),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 4),
+                      EditorIconButton(
+                        icon: icons.rotateLeftIcon,
+                        tooltip: strings.rotateLeft,
+                        onPressed: controller.rotateLeft,
+                      ),
+                      EditorIconButton(
+                        icon: icons.rotateRightIcon,
+                        tooltip: strings.rotateRight,
+                        onPressed: controller.rotateRight,
+                      ),
+                      EditorIconButton(
+                        icon: icons.flipHorizontalIcon,
+                        tooltip: strings.flipHorizontal,
+                        onPressed: controller.flipHorizontal,
+                      ),
+                      EditorIconButton(
+                        icon: icons.flipVerticalIcon,
+                        tooltip: strings.flipVertical,
+                        onPressed: controller.flipVertical,
+                      ),
+                      EditorIconButton(
+                        icon: icons.resetCropIcon,
+                        tooltip: strings.resetCrop,
+                        onPressed: controller.resetCrop,
+                      ),
+                      const SizedBox(width: 4),
                       EditorIconButton(
                         icon: icons.confirmIcon,
                         tooltip: strings.confirm,
@@ -114,8 +116,8 @@ class CropControls extends StatelessWidget {
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

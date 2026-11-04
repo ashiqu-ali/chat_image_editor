@@ -24,7 +24,7 @@ class AppSettings extends ChangeNotifier {
     : _themeMode = themeMode,
       _seedColor = seedColor ?? seedOptions.first.color;
 
-  /// Seed colors offered on the home screen.
+  /// Seed colors offered on the demos screen.
   static const List<SeedOption> seedOptions = <SeedOption>[
     SeedOption('Teal', Color(0xFF00897B)),
     SeedOption('Indigo', Color(0xFF3949AB)),

@@ -18,7 +18,7 @@ typedef DemoLauncher =
       Uint8List image,
     );
 
-/// One entry in the home screen's list of demos.
+/// One entry in the demos screen's list.
 @immutable
 class EditorDemo {
   /// Creates a demo entry.
@@ -46,7 +46,7 @@ class EditorDemo {
   final int? maxBytes;
 }
 
-/// Every demo, in the order they appear on the home screen.
+/// Every demo, in the order they appear on the demos screen.
 const List<EditorDemo> editorDemos = <EditorDemo>[
   EditorDemo(
     title: 'Default',

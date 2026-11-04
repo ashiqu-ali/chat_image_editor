@@ -4,9 +4,11 @@ import '../theme/chat_image_editor_scope.dart';
 
 /// A circular, translucent icon button used across the editor's toolbars.
 ///
-/// The hit target is 48×48 with a smaller circular backdrop. Colors come
-/// from the resolved theme; the icon inherits them through `IconTheme`, so
-/// user-supplied `Icon`s without an explicit color match the editor.
+/// The hit target is 48×48 with a smaller dark circular backdrop that keeps
+/// the icon readable on light and dark photos alike. The selected tool or
+/// option is drawn in the accent color. Colors come from the resolved theme;
+/// the icon inherits them through `IconTheme`, so user-supplied `Icon`s
+/// without an explicit color match the editor.
 class EditorIconButton extends StatelessWidget {
   /// Creates a toolbar button.
   const EditorIconButton({
@@ -27,7 +29,7 @@ class EditorIconButton extends StatelessWidget {
   /// Tap handler. `null` disables the button.
   final VoidCallback? onPressed;
 
-  /// Highlights the button as the selected tool or option.
+  /// Draws the icon in the accent color, for the selected tool or option.
   final bool active;
 
   /// Draws the circular backdrop. Turn off for buttons on solid surfaces.
@@ -43,10 +45,8 @@ class EditorIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ChatImageEditorScope.of(context).theme;
     final enabled = onPressed != null;
-    final background = active
-        ? theme.activeToolColor
-        : (backdrop ? theme.toolbarBackgroundColor : null);
-    final foreground = active ? theme.onPrimaryColor : theme.foregroundColor;
+    final background = backdrop ? theme.toolbarBackgroundColor : null;
+    final foreground = active ? theme.activeToolColor : theme.foregroundColor;
 
     return Tooltip(
       message: tooltip,

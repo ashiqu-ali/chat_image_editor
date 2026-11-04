@@ -2,6 +2,9 @@
 //
 //   fvm flutter drive --driver=test_driver/screenshot_driver.dart \
 //     --target=integration_test/screenshots_test.dart -d <device>
+//
+// Then shrink them with `sips -Z 1080 ../doc/screenshots/*.png` (macOS), or
+// do both with `tool/record_gifs.sh --screenshots` from the package root.
 import 'dart:typed_data';
 
 import 'package:chat_image_editor/chat_image_editor.dart';
@@ -117,10 +120,20 @@ void main() {
     controller
       ..selectTool(EditorTool.compress)
       ..setQuality(70);
-    await tester.pumpAndSettle();
-    // Wait for the debounced size estimate to replace the placeholder.
-    final estimating = find.text(const ChatImageEditorStrings().estimatingSize);
-    for (var i = 0; i < 120 && estimating.evaluate().isNotEmpty; i++) {
+    await tester.pump();
+    // The sheet shows a small progress indicator until the debounced size
+    // estimate is ready. It spins, so settle only once it's gone.
+    final sheet = find
+        .ancestor(
+          of: find.text(const ChatImageEditorStrings().estimatedSizeLabel),
+          matching: find.byType(Material),
+        )
+        .first;
+    final estimating = find.descendant(
+      of: sheet,
+      matching: find.byWidgetPredicate((widget) => widget is ProgressIndicator),
+    );
+    for (var i = 0; i < 160 && estimating.evaluate().isNotEmpty; i++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 250)),
       );

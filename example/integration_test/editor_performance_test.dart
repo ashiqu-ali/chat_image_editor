@@ -9,7 +9,7 @@
 //
 //   fvm flutter test integration_test -d <device>
 //
-// See docs/PERFORMANCE.md in the package for what the summaries mean.
+// See doc/PERFORMANCE.md in the package for what the summaries mean.
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -24,7 +24,7 @@ const Duration frameInterval = Duration(milliseconds: 16);
 
 /// Space the editor keeps around the image in crop mode, inside the safe
 /// area, so the crop frame's corners can be found from the public API.
-const EdgeInsets cropModeInsets = EdgeInsets.fromLTRB(24, 76, 24, 136);
+const EdgeInsets cropModeInsets = EdgeInsets.fromLTRB(24, 32, 24, 136);
 
 /// A text layer to drag, in normalized original space.
 const TextLayer dragText = TextLayer(

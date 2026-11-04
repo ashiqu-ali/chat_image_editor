@@ -383,34 +383,21 @@ class _ChatImageEditorState extends State<ChatImageEditor> {
     }
   }
 
-  /// System back: first closes text entry or the open tool, then closes the
-  /// editor like the close button.
+  /// System back (the Android back button or gesture): first leaves the
+  /// open tool and returns to the editor, then closes the editor like the
+  /// close button.
+  ///
+  /// Leaving a tool works like its own cancel: crop restores the crop,
+  /// rotation and flips from when it opened, text entry finishes, the
+  /// compress sheet closes without applying its draft and draw mode closes.
   void _handleBack(BuildContext context) {
     final controller = _controller;
     if (controller.loadStatus == ImageLoadStatus.ready) {
       if (controller.isExporting) return;
-      if (controller.editingTextId != null) {
-        controller.finishTextEditing();
-        if (controller.activeTool == EditorTool.text) controller.closeTool();
+      if (controller.activeTool != EditorTool.none ||
+          controller.editingTextId != null) {
+        controller.closeTool();
         return;
-      }
-      switch (controller.activeTool) {
-        case EditorTool.crop:
-          controller.cancelCrop();
-          if (controller.activeTool == EditorTool.crop) controller.closeTool();
-          return;
-        case EditorTool.compress:
-          controller.commitQuality();
-          if (controller.activeTool == EditorTool.compress) {
-            controller.closeTool();
-          }
-          return;
-        case EditorTool.draw:
-        case EditorTool.text:
-          controller.closeTool();
-          return;
-        case EditorTool.none:
-          break;
       }
     }
     unawaited(_close(context));

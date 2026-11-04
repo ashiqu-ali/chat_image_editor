@@ -4,6 +4,7 @@ import '../controller/chat_image_editor_controller.dart';
 import '../core/geometry/image_geometry.dart';
 import '../models/editor_enums.dart';
 import '../models/image_edit_value.dart';
+import 'crop_controls.dart';
 
 /// Shared layout rules for the editor's stacked layers.
 ///
@@ -14,11 +15,18 @@ abstract final class EditorLayout {
   /// Height reserved for the top bar, below the safe area.
   static const double topBarHeight = 64;
 
-  /// Space kept clear above the image in crop mode, below the safe area.
-  static const double cropTopInset = 76;
+  /// Room kept around the crop frame so a handle's whole touch area
+  /// (`CropOverlay.cornerSlop`) stays reachable and off other controls.
+  static const double cropHandleClearance = 32;
 
-  /// Space kept clear below the image in crop mode, above the safe area.
-  static const double cropBottomInset = 136;
+  /// Space kept clear above the image in crop mode, below the safe area.
+  /// Crop mode has no top bar, so this is only room for the top handles.
+  static const double cropTopInset = cropHandleClearance;
+
+  /// Space kept clear below the image in crop mode, above the safe area:
+  /// the crop controls plus room for the bottom handles.
+  static const double cropBottomInset =
+      CropControls.height + cropHandleClearance;
 
   /// Horizontal margin around the image in crop mode, so the frame's
   /// handles stay reachable.

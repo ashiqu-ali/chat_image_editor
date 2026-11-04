@@ -44,23 +44,26 @@ class EditorSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ChatImageEditorScope.of(context).theme;
-    return Semantics(
-      label: semanticsLabel,
-      container: true,
-      child: Slider(
-        value: value.clamp(min, max).toDouble(),
-        min: min,
-        max: max,
-        divisions: divisions,
-        onChanged: onChanged,
-        onChangeEnd: onChangeEnd,
-        activeColor: theme.sliderActiveColor,
-        inactiveColor: theme.sliderInactiveColor,
-        thumbColor: theme.sliderThumbColor,
-        overlayColor: WidgetStatePropertyAll<Color>(
-          theme.sliderActiveColor.withValues(alpha: 0.16),
+    // One node: screen readers announce the label with the slider's value
+    // and actions, instead of stopping on the label first.
+    return MergeSemantics(
+      child: Semantics(
+        label: semanticsLabel,
+        child: Slider(
+          value: value.clamp(min, max).toDouble(),
+          min: min,
+          max: max,
+          divisions: divisions,
+          onChanged: onChanged,
+          onChangeEnd: onChangeEnd,
+          activeColor: theme.sliderActiveColor,
+          inactiveColor: theme.sliderInactiveColor,
+          thumbColor: theme.sliderThumbColor,
+          overlayColor: WidgetStatePropertyAll<Color>(
+            theme.sliderActiveColor.withValues(alpha: 0.16),
+          ),
+          semanticFormatterCallback: semanticFormatterCallback,
         ),
-        semanticFormatterCallback: semanticFormatterCallback,
       ),
     );
   }
