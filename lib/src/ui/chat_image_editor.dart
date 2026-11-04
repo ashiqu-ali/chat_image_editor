@@ -24,6 +24,11 @@ typedef ExportCallback = Future<ChatImageEditorResult?> Function();
 /// Called on a long press of the send button with a way to export on
 /// demand (for example after the user picks a time in a schedule sheet).
 /// Return `true` to close the editor, `false` to stay.
+///
+/// Handle the result inside the callback. Closing this way counts as a
+/// cancel: [ChatImageEditor.open] completes with `null`, and an embedded
+/// editor calls [ChatImageEditor.onCancel], not
+/// [ChatImageEditor.onComplete].
 typedef SendLongPressCallback =
     Future<bool> Function(BuildContext context, ExportCallback export);
 
@@ -57,6 +62,9 @@ class ChatImageEditor extends StatefulWidget {
   final ChatImageEditorController? controller;
 
   /// Behaviour configuration.
+  ///
+  /// With an external [controller], leaving this at its default uses the
+  /// controller's `config`; any other value replaces it.
   final ChatImageEditorConfig config;
 
   /// Color and style overrides; see [ChatImageEditorThemeData].
@@ -85,7 +93,8 @@ class ChatImageEditor extends StatefulWidget {
   final ValueChanged<ChatImageEditorResult>? onComplete;
 
   /// Called when the user closes the editor (after any discard
-  /// confirmation). When `null`, the editor pops its route with `null`.
+  /// confirmation), and when [onSendLongPress] returns `true`. When `null`,
+  /// the editor pops its route with `null`.
   final VoidCallback? onCancel;
 
   /// Pushes the editor as a full-screen route and completes with the

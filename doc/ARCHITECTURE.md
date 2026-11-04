@@ -1,8 +1,10 @@
 # Architecture
 
-`chat_image_editor` is a pure-Dart Flutter package. Every pixel is drawn with
-`CustomPaint` and `dart:ui`; there's no platform code, so it runs on Android,
-iOS, web, macOS, Windows and Linux.
+`chat_image_editor` is a pure-Dart Flutter package. The image and the edits
+are painted with `CustomPaint` and `dart:ui`; the chrome around them (bars,
+buttons, sliders, sheets, the caption field) uses standard Flutter widgets.
+There's no platform code, so it runs on Android, iOS, web, macOS, Windows
+and Linux.
 
 ## Design principles
 
@@ -60,7 +62,11 @@ lib/
 ```
 
 Dependencies point downwards only: `ui → controller → core → models`.
-`core` never imports `ui`. Widgets never compute geometry themselves.
+`config` and `theme` sit beside these layers and are shared by them:
+`config/export_options.dart` imports `core/encoding` (for `ImageEncoder`),
+the builders in `config/` and `ChatImageEditorScope` in `theme/` import the
+controller, and `core`, the controller and `ui` all read `config`. Nothing
+outside `ui` imports `ui`. Widgets never compute geometry themselves.
 
 ## Theming
 
@@ -69,15 +75,21 @@ Dependencies point downwards only: `ui → controller → core → models`.
 
 1. the `theme` passed to `ChatImageEditor`,
 2. a `ChatImageEditorThemeData` registered in the app's `ThemeData.extensions`,
-3. defaults derived from the app's `ColorScheme` (accents use `primary`).
+3. defaults derived from the app's `ColorScheme` (accents use `primary`)
+   and `TextTheme` (labels, caption and sheet text, and the text layers'
+   font).
 
 Widgets read the resolved theme, icons, strings and config from
-`ChatImageEditorScope.of(context)` and never hard-code colors.
+`ChatImageEditorScope.of(context)` and take their colors from the theme. The
+only fixed colors are drop shadows, the translucent text background and
+contrast colors picked from another color, such as the black or white icon
+on the pen-color swatch.
 
 ## Export pipeline
 
 ```
-source bytes ── decode at the needed size (ImageDescriptor, capped by maxLongEdge)
+source bytes ── decode at the needed size (capped by maxLongEdge; ImageDescriptor
+                reads the size first, or on the web a codec size callback)
    → PictureRecorder canvas sized to the output
    → JPEG only: fill backgroundColor
    → scale(outputScale) → CompositionRenderer.paint(...)

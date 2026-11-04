@@ -8,13 +8,20 @@ fvm flutter pub get
 fvm flutter run
 ```
 
+Use the pinned Flutter (3.47.9, see `.fvmrc` in the repository root). The
+example's `pubspec.yaml` turns on Swift Package Manager with
+`flutter: config: enable-swift-package-manager`, which older Flutter
+versions such as 3.32 don't understand. On iOS and macOS, plugins build
+with Swift Package Manager, so there's no Podfile and no `pod install`.
+
 It works with zero setup: "Sample photo" draws a landscape with `dart:ui`.
 You can also pick a photo from the gallery or take one with the camera (where
 the platform supports it).
 
 ## The chat
 
-1. Type a message if you like, then tap the paperclip or the photo button.
+1. Type a message if you like, then tap the paperclip. With an empty
+   message field, the round button also opens the photo sheet.
 2. Pick a photo. The editor opens with your message as the caption.
 3. Draw, add text, crop, rotate or change the quality, then send.
 
@@ -59,24 +66,36 @@ Open them from the tune button in the chat's app bar.
 Every demo ends on a result screen with the edited image, caption,
 dimensions, format and file size.
 
-The demos screen also has a light/dark switch and a seed color picker for the
-whole app, chat included.
+The demos screen also has a System / Light / Dark segmented control and a
+seed color picker for the whole app, chat included.
 
 ## Code map
 
 | File | Contents |
 |---|---|
+| `lib/main.dart`, `lib/src/app.dart` | Entry point and the `MaterialApp`, themed from the appearance settings. |
+| `lib/src/app_settings.dart` | App-wide appearance: theme mode and seed color. |
 | `lib/src/chat/chat_photo_editor.dart` | How the chat opens the editor: export limits, caption and stats logging. |
 | `lib/src/chat/chat_screen.dart` | The chat: message list, photo picking and sending. |
-| `lib/src/chat/message_bubble.dart` | Text and photo bubbles, with thumbnails decoded at bubble size. |
-| `lib/src/chat/photo_viewer_screen.dart` | Full-screen photo with its `ExportStats`. |
+| `lib/src/chat/chat_composer.dart` | The message field with the paperclip and the round send button, and the photo source sheet. |
+| `lib/src/chat/chat_message.dart` | One message: text, or an edited photo with an optional caption. |
 | `lib/src/chat/conversation.dart` | The chat's messages, newest first. |
+| `lib/src/chat/message_bubble.dart` | Text and photo bubbles, with thumbnails decoded at bubble size. |
+| `lib/src/chat/photo_hero.dart` | The hero animation between a bubble and the viewer, flying the bubble's thumbnail. |
+| `lib/src/chat/photo_viewer_screen.dart` | Full-screen photo with its `ExportStats`. |
+| `lib/src/chat/export_text.dart` | Formats byte counts, durations and size changes for bubbles and the viewer. |
 | `lib/src/demos/` | One file per demo, plus `demo.dart` listing them. |
 | `lib/src/demos_screen.dart` | Image picking, appearance settings and the demo list. |
+| `lib/src/widgets/` | The demos screen's cards and tiles: image source, appearance and one tile per demo. |
 | `lib/src/result_screen.dart` | Shows a `ChatImageEditorResult`. |
+| `lib/src/edit_summary.dart` | A one-line summary of the edits, such as `2 strokes · 1 text layer`. |
 | `lib/src/sample_image.dart` | Draws and encodes the sample image. |
 | `integration_test/editor_performance_test.dart` | Frame timings of drawing, text dragging, cropping and zooming. |
+| `integration_test/screenshots_test.dart` | Captures the README and pub.dev screenshots. |
+| `integration_test/demo_recording_test.dart` | Scripted walkthroughs recorded into the README GIFs by `tool/record_gifs.sh`. |
 | `test_driver/perf_driver.dart` | Writes each frame-timing report to `build/<reportKey>.timeline_summary.json`. |
+| `test_driver/screenshot_driver.dart` | Saves the screenshots to the package's `doc/screenshots/`. |
+| `test_driver/integration_test.dart` | Host side for integration tests that only pass or fail, such as the GIF walkthroughs. |
 
 ## Frame performance test
 

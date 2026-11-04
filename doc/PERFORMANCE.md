@@ -114,7 +114,9 @@ Things to look for:
 The `benchmark/` folder measures the hot paths on the host machine, using a
 synthesized photo (a 4032×3024 noisy gradient JPEG generated with
 `package:image` at the start of the run; nothing is downloaded or checked
-in). Run from the package root:
+in). `benchmark/` and `tool/` aren't part of the published package, so run
+them from the root of a clone of the
+[repository](https://github.com/ashiqu-ali/chat_image_editor):
 
 ```bash
 fvm flutter test benchmark

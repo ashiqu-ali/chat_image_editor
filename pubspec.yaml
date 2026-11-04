@@ -13,7 +13,7 @@ topics:
   - chat
 
 screenshots:
-  - description: Draw arrows, shapes and freehand with a color strip.
+  - description: Draw arrows, shapes and freehand with a gradient color slider.
     path: doc/screenshots/draw.png
   - description: Text layers with backgrounds, a caption and a send button.
     path: doc/screenshots/text.png

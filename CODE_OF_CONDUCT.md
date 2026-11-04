@@ -16,9 +16,8 @@ discussions and any other project space is expected to follow it.
 
 If you experience or witness unacceptable behaviour, report it privately to the
 maintainer through a
-[GitHub private report](https://github.com/ashiqu-ali/chat_image_editor/security/advisories/new)
-or a direct message on GitHub. All reports are reviewed promptly and handled
-confidentially.
+[GitHub private report](https://github.com/ashiqu-ali/chat_image_editor/security/advisories/new).
+All reports are reviewed promptly and handled confidentially.
 
 Maintainers may remove, edit or reject comments, commits, code, issues and
 other contributions that don't follow this Code of Conduct, and may

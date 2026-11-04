@@ -147,8 +147,9 @@ class ChatImageEditorThemeData
   /// Send button background while disabled. Defaults to grey.
   final Color? sendButtonDisabledColor;
 
-  /// Background of bottom sheets such as the compress sheet. Defaults to
-  /// near-black.
+  /// Background of bottom sheets such as the compress sheet, and of the
+  /// Material discard dialog. Its brightness also decides whether the
+  /// Cupertino discard alert is light or dark. Defaults to near-black.
   final Color? sheetBackgroundColor;
 
   /// Text and icons on bottom sheets. Defaults to white.
@@ -164,7 +165,7 @@ class ChatImageEditorThemeData
   /// button's busy spinner uses [sendButtonForegroundColor].
   final Color? loadingIndicatorColor;
 
-  /// Colors offered by the color strip, top to bottom. Defaults to
+  /// Stops of the vertical gradient color slider, top to bottom. Defaults to
   /// [ChatImageEditorThemeData.defaultPalette].
   final List<Color>? palette;
 
@@ -176,12 +177,14 @@ class ChatImageEditorThemeData
   /// color keeps [captionTextColor].
   final TextStyle? captionStyle;
 
-  /// Bottom sheet titles. Merged onto the default, so a style without a
-  /// color keeps [sheetForegroundColor].
+  /// Bottom sheet titles, and the Material discard dialog's title. Merged
+  /// onto the default, so a style without a color keeps
+  /// [sheetForegroundColor].
   final TextStyle? sheetTitleStyle;
 
-  /// Bottom sheet body text. Merged onto the default, so a style without a
-  /// color keeps [sheetForegroundColor].
+  /// Bottom sheet body text, and the Material discard dialog's message.
+  /// Merged onto the default, so a style without a color keeps
+  /// [sheetForegroundColor].
   final TextStyle? sheetBodyStyle;
 
   /// Base style for text layers drawn on the image (font family, weight,
