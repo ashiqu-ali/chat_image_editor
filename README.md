@@ -433,9 +433,15 @@ out of scope.
 
 ## Example app
 
-The [example](example) app shows every customization option: the default
-look, a custom theme, done mode, a size limit, localized strings and an
-external controller. See [example/README.md](example/README.md) to run it.
+The [example](example) app is a chat. Pick a photo from the gallery or the
+camera, edit it, and send it with a caption; each sent photo shows its file
+size and export time, and opening it shows the full `ExportStats`. The whole
+integration is one call in
+[`chat_photo_editor.dart`](example/lib/src/chat/chat_photo_editor.dart).
+
+A customization screen, one tap away, shows the default look, a custom
+theme, done mode, a size limit, localized strings and an external
+controller. See [example/README.md](example/README.md) to run it.
 
 ## Contributing
 

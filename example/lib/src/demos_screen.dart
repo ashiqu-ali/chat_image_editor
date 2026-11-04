@@ -12,19 +12,20 @@ import 'widgets/appearance_card.dart';
 import 'widgets/demo_tile.dart';
 import 'widgets/image_source_card.dart';
 
-/// Lists the demos, the image they open and the appearance switcher.
-class HomeScreen extends StatefulWidget {
-  /// Creates the home screen.
-  const HomeScreen({super.key, required this.settings});
+/// Lists the customization demos, the image they open and the appearance
+/// switcher.
+class DemosScreen extends StatefulWidget {
+  /// Creates the demos screen.
+  const DemosScreen({super.key, required this.settings});
 
   /// App-wide appearance settings.
   final AppSettings settings;
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<DemosScreen> createState() => _DemosScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _DemosScreenState extends State<DemosScreen> {
   static const double _maxContentWidth = 680;
 
   final ImagePicker _picker = ImagePicker();
@@ -94,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat image editor')),
+      appBar: AppBar(title: const Text('Customization demos')),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final gutter = math.max(

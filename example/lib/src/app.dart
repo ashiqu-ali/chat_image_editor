@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_settings.dart';
-import 'home_screen.dart';
+import 'chat/chat_screen.dart';
 
 /// Root of the example app.
 class ExampleApp extends StatefulWidget {
@@ -40,7 +40,7 @@ class _ExampleAppState extends State<ExampleApp> {
           themeMode: settings.themeMode,
           theme: settings.themeFor(Brightness.light),
           darkTheme: settings.themeFor(Brightness.dark),
-          home: HomeScreen(settings: settings),
+          home: ChatScreen(settings: settings),
         );
       },
     );
