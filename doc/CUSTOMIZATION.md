@@ -313,7 +313,7 @@ way, filling each field from your localization class.
 | `qualityLabel` | Label of the quality row in the compress sheet, and the slider's semantics label. | `Quality` |
 | `originalSizeLabel` | Label before the original file size. | `Original` |
 | `estimatedSizeLabel` | Label before the estimated file size. | `Estimated size` |
-| `estimatingSize` | Shown while the size estimate is computed. | `Calculating…` |
+| `estimatingSize` | Screen reader label of the spinner shown while the size estimate is computed. | `Calculating…` |
 | `discardTitle` | Discard dialog title. | `Discard changes?` |
 | `discardMessage` | Discard dialog message. | `Your edits to this image will be lost.` |
 | `discardConfirm` | Discard dialog confirm button. | `Discard` |
@@ -670,7 +670,7 @@ text are not here; they live in the theme, icons and strings.
 | `enableZoom` | `true` | Allows pinch-to-zoom while no tool is open. |
 | `enableHaptics` | `true` | Light haptic feedback on alignment guides, color picks and the delete target. |
 | `showUndoRedo` | `true` | Shows undo and redo buttons in the top bar, and undo in the pen-mode bar. |
-| `hideSystemBarsWhileDrawing` | `false` | Opt-in. Hides the system status and navigation bars while the draw tool is open, so the whole screen is canvas. |
+| `hideSystemBarsWhileDrawing` | `false` | Opt-in. Hides the system status and navigation bars while the draw tool is open, so the whole screen is canvas; restores them when drawing ends or the editor closes. |
 
 The tools are `EditorTool.draw`, `text`, `crop` and `compress`. The shapes
 are `ShapeType.freehand`, `line`, `rectangle`, `circle` and `arrow`.

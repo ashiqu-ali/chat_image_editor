@@ -136,11 +136,12 @@ class ChatImageEditorThemeData
   /// Caption hint. Defaults to translucent white.
   final Color? captionHintColor;
 
-  /// Send and done button background. Defaults to [primaryColor].
+  /// Send and done button background, also the compress sheet's Apply
+  /// button. Defaults to [primaryColor].
   final Color? sendButtonColor;
 
-  /// Send and done button icon and busy spinner. Defaults to
-  /// [onPrimaryColor].
+  /// Send and done button icon and busy spinner, and the Apply button's
+  /// label. Defaults to [onPrimaryColor].
   final Color? sendButtonForegroundColor;
 
   /// Send button background while disabled. Defaults to grey.
