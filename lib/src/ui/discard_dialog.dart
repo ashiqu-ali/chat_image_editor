@@ -34,13 +34,33 @@ Future<bool> showDiscardDialog(BuildContext context) async {
   return discard ?? false;
 }
 
+/// A dark color scheme seeded with the editor's primary color when
+/// [theme]'s sheet is dark, or `null` when it is light.
+///
+/// The app's accents are tuned for the app's own surfaces, so a light app's
+/// primary and error colors are hard to read on the editor's dark sheet.
+/// The dark scheme keeps the accent's hue at a tone that stays readable.
+ColorScheme? _darkSheetScheme(ChatImageEditorResolvedTheme theme) {
+  final brightness = ThemeData.estimateBrightnessForColor(
+    theme.sheetBackgroundColor,
+  );
+  if (brightness != Brightness.dark) return null;
+  return ColorScheme.fromSeed(
+    seedColor: theme.primaryColor,
+    brightness: Brightness.dark,
+  );
+}
+
 /// The default discard confirmation on Android, the web and desktop
 /// platforms other than macOS: a Material [AlertDialog] colored from the
 /// editor theme.
 ///
-/// "Keep editing" uses the editor's primary color and "Discard" the app
-/// theme's `ColorScheme.error`, so the destructive choice stands out.
-/// Pops `true` to discard and `false` to keep editing.
+/// On a light sheet, "Keep editing" uses the editor's primary color and
+/// "Discard" the app theme's `ColorScheme.error`, so the destructive choice
+/// stands out. On a dark sheet (the default) both come from a dark color
+/// scheme seeded with the editor's primary color instead, so they stay
+/// readable whatever the app's brightness. Pops `true` to discard and
+/// `false` to keep editing.
 ///
 /// Dialogs live in their own route, outside the editor's scope, so the
 /// theme and strings are passed in.
@@ -60,6 +80,10 @@ class MaterialDiscardDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final darkScheme = _darkSheetScheme(theme);
+    final keepColor = darkScheme?.primary ?? theme.primaryColor;
+    final discardColor =
+        darkScheme?.error ?? Theme.of(context).colorScheme.error;
     ButtonStyle buttonStyle(Color color) => TextButton.styleFrom(
       foregroundColor: color,
       textStyle: theme.labelStyle,
@@ -71,12 +95,12 @@ class MaterialDiscardDialog extends StatelessWidget {
       content: Text(strings.discardMessage, style: theme.sheetBodyStyle),
       actions: <Widget>[
         TextButton(
-          style: buttonStyle(theme.primaryColor),
+          style: buttonStyle(keepColor),
           onPressed: () => Navigator.of(context).pop(false),
           child: Text(strings.keepEditing),
         ),
         TextButton(
-          style: buttonStyle(Theme.of(context).colorScheme.error),
+          style: buttonStyle(discardColor),
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(strings.discardConfirm),
         ),
@@ -90,9 +114,10 @@ class MaterialDiscardDialog extends StatelessWidget {
 /// "Discard" as the destructive one.
 ///
 /// The alert is light or dark to match the editor's
-/// `sheetBackgroundColor` (dark by default), and "Keep editing" uses the
-/// editor's primary color. Pops `true` to discard and `false` to keep
-/// editing.
+/// `sheetBackgroundColor` (dark by default). "Keep editing" uses the
+/// editor's primary color on a light alert and, like the Material dialog,
+/// the primary of a dark scheme seeded with it on a dark one. "Discard"
+/// uses the system red. Pops `true` to discard and `false` to keep editing.
 ///
 /// Dialogs live in their own route, outside the editor's scope, so the
 /// theme and strings are passed in.
@@ -112,12 +137,11 @@ class CupertinoDiscardDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final darkScheme = _darkSheetScheme(theme);
     return CupertinoTheme(
       data: CupertinoTheme.of(context).copyWith(
-        brightness: ThemeData.estimateBrightnessForColor(
-          theme.sheetBackgroundColor,
-        ),
-        primaryColor: theme.primaryColor,
+        brightness: darkScheme == null ? Brightness.light : Brightness.dark,
+        primaryColor: darkScheme?.primary ?? theme.primaryColor,
       ),
       child: CupertinoAlertDialog(
         title: Text(strings.discardTitle),
