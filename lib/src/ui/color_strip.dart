@@ -38,10 +38,14 @@ class ColorStrip extends StatefulWidget {
 
   /// The color at [t] along a gradient through [palette], from the first
   /// color at `0` to the last at `1`. The palette's own colors are returned
-  /// exactly at their stops.
+  /// exactly at their stops. [palette] must not be empty.
   static Color colorAt(List<Color> palette, double t) {
+    assert(palette.isNotEmpty, 'The palette has no colors.');
     if (palette.length == 1) return palette.first;
     final position = t.clamp(0.0, 1.0) * (palette.length - 1);
+    // `i / (n - 1) * (n - 1)` can land a hair off `i`; snap to the stop.
+    final stop = position.round();
+    if ((position - stop).abs() < 1e-9) return palette[stop];
     final index = math.min(position.floor(), palette.length - 2);
     final local = position - index;
     if (local <= 0) return palette[index];
@@ -50,7 +54,8 @@ class ColorStrip extends StatefulWidget {
   }
 
   /// Where along a gradient through [palette] the color closest to [color]
-  /// sits, from `0` to `1`.
+  /// sits, from `0` to `1`. A palette color is found exactly at its stop;
+  /// any other color at the nearest point of the gradient.
   static double positionOf(List<Color> palette, Color color) {
     if (palette.length < 2) return 0;
     for (var i = 0; i < palette.length; i++) {

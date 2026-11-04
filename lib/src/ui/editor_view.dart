@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/editor_enums.dart';
 import '../theme/chat_image_editor_scope.dart';
@@ -63,7 +66,12 @@ class EditorView extends StatelessWidget {
                 case ImageLoadStatus.failed:
                   return const _StatusView(failed: true);
                 case ImageLoadStatus.ready:
-                  return _ReadyView(state: state);
+                  return _SystemBars(
+                    hidden:
+                        scope.config.hideSystemBarsWhileDrawing &&
+                        state.tool == EditorTool.draw,
+                    child: _ReadyView(state: state),
+                  );
               }
             },
           ),
@@ -102,9 +110,17 @@ class _ReadyView extends StatelessWidget {
         children: <Widget>[
           const EditorCanvas(),
           if (tool == EditorTool.crop) const CropOverlay(),
-          if (tool == EditorTool.crop) const CropControls(),
-          if (showDrawToolbar)
-            _Fade(visible: !state.drawing, child: const DrawColorPicker()),
+          // Stays mounted, like the caption bar, so it can fade out with the
+          // rest of the draw chrome.
+          _Fade(
+            visible: !state.drawing,
+            child: _SlideFade(
+              visible: showDrawToolbar,
+              duration: _BottomChrome.durationOf(context),
+              hiddenOffset: Offset.zero,
+              child: const DrawColorPicker(),
+            ),
+          ),
           if (showTopBar)
             Positioned(
               top: 0,
@@ -121,12 +137,20 @@ class _ReadyView extends StatelessWidget {
             bottom: 0,
             child: _Fade(
               visible: !hideChrome,
-              child: _BottomChrome(
-                showCaption: showCaption,
-                showDrawToolbar: showDrawToolbar,
+              // With nothing to show, the scrim and whatever is still
+              // sliding out mustn't swallow taps meant for the open tool.
+              child: IgnorePointer(
+                ignoring: !showCaption && !showDrawToolbar,
+                child: _BottomChrome(
+                  showCaption: showCaption,
+                  showDrawToolbar: showDrawToolbar,
+                ),
               ),
             ),
           ),
+          // Above the bottom chrome, which may still be sliding out when
+          // crop opens.
+          if (tool == EditorTool.crop) const CropControls(),
           if (state.gesture)
             Positioned(
               left: 0,
@@ -151,6 +175,56 @@ class _ReadyView extends StatelessWidget {
   }
 }
 
+/// Hides the status and navigation bars while [hidden], for
+/// `ChatImageEditorConfig.hideSystemBarsWhileDrawing`. Shows them again once
+/// [hidden] turns off or the editor goes away.
+class _SystemBars extends StatefulWidget {
+  const _SystemBars({required this.hidden, required this.child});
+
+  final bool hidden;
+  final Widget child;
+
+  @override
+  State<_SystemBars> createState() => _SystemBarsState();
+}
+
+class _SystemBarsState extends State<_SystemBars> {
+  /// Whether this widget hid the bars and still owes showing them again.
+  bool _hidden = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _apply(widget.hidden);
+  }
+
+  @override
+  void didUpdateWidget(_SystemBars oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _apply(widget.hidden);
+  }
+
+  @override
+  void dispose() {
+    _apply(false);
+    super.dispose();
+  }
+
+  void _apply(bool hidden) {
+    if (hidden == _hidden) return;
+    _hidden = hidden;
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: hidden ? const <SystemUiOverlay>[] : SystemUiOverlay.values,
+      ).catchError((Object _) {}),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
 /// The bottom controls over a scrim that fades into the photo: the caption
 /// bar, or the draw tool's controls, each sliding and fading in and out.
 class _BottomChrome extends StatelessWidget {
@@ -164,12 +238,61 @@ class _BottomChrome extends StatelessWidget {
 
   static const Duration duration = Duration(milliseconds: 250);
 
+  /// [duration], or zero when the platform asks for reduced motion.
+  static Duration durationOf(BuildContext context) {
+    return MediaQuery.disableAnimationsOf(context) ? Duration.zero : duration;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = ChatImageEditorScope.of(context).theme;
-    final time = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : duration;
+    final time = durationOf(context);
+    final content = Stack(
+      alignment: Alignment.bottomCenter,
+      children: <Widget>[
+        // The caption bar stays mounted while a tool is open, so its
+        // field, focus and form keep their state and are never built
+        // twice during a transition.
+        _SlideFade(
+          visible: showCaption,
+          duration: time,
+          child: const EditorBottomBar(),
+        ),
+        AnimatedSwitcher(
+          duration: time,
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.3),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          ),
+          // Keyed wrappers keep the outgoing toolbar's element (and its
+          // state) while it fades, and stop it from taking taps.
+          layoutBuilder: (current, previous) => Stack(
+            alignment: Alignment.bottomCenter,
+            children: <Widget>[
+              for (final child in previous)
+                IgnorePointer(key: child.key, child: child),
+              if (current != null)
+                IgnorePointer(
+                  key: current.key,
+                  ignoring: false,
+                  child: current,
+                ),
+            ],
+          ),
+          child: showDrawToolbar
+              ? const DrawToolbar(key: ValueKey<String>('draw'))
+              : const SizedBox.shrink(key: ValueKey<String>('none')),
+        ),
+      ],
+    );
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -178,66 +301,38 @@ class _BottomChrome extends StatelessWidget {
           colors: <Color>[theme.scrimColor, theme.scrimColor.withAlpha(0)],
         ),
       ),
-      child: AnimatedSize(
-        duration: time,
-        curve: Curves.easeOutCubic,
-        alignment: Alignment.bottomCenter,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: <Widget>[
-            // The caption bar stays mounted while a tool is open, so its
-            // field, focus and form keep their state and are never built
-            // twice during a transition.
-            _SlideFade(
-              visible: showCaption,
+      // AnimatedSize can't run with no duration: it would re-dirty itself
+      // in the middle of layout.
+      child: time == Duration.zero
+          ? content
+          : AnimatedSize(
               duration: time,
-              child: const EditorBottomBar(),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.bottomCenter,
+              child: content,
             ),
-            AnimatedSwitcher(
-              duration: time,
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.3),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                ),
-              ),
-              layoutBuilder: (current, previous) => Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  for (final child in previous) IgnorePointer(child: child),
-                  ?current,
-                ],
-              ),
-              child: showDrawToolbar
-                  ? const DrawToolbar(key: ValueKey<String>('draw'))
-                  : const SizedBox.shrink(key: ValueKey<String>('none')),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
 
-/// Slides [child] up into place and fades it in when [visible], and back out
-/// when not. Once hidden it goes offstage: it takes no space, can't be
-/// focused and isn't seen by screen readers, but keeps its state.
+/// Slides [child] into place from [hiddenOffset] and fades it in when
+/// [visible], and back out when not. Once hidden it goes offstage: it takes
+/// no space, can't be focused and isn't seen by screen readers, but keeps
+/// its state.
 class _SlideFade extends StatefulWidget {
   const _SlideFade({
     required this.visible,
     required this.duration,
     required this.child,
+    this.hiddenOffset = const Offset(0, 0.3),
   });
 
   final bool visible;
   final Duration duration;
   final Widget child;
+
+  /// Where [child] sits while hidden, as a fraction of its size.
+  final Offset hiddenOffset;
 
   @override
   State<_SlideFade> createState() => _SlideFadeState();
@@ -266,14 +361,16 @@ class _SlideFadeState extends State<_SlideFade> {
         child: IgnorePointer(
           ignoring: !visible,
           child: AnimatedSlide(
-            offset: visible ? Offset.zero : const Offset(0, 0.3),
+            offset: visible ? Offset.zero : widget.hiddenOffset,
             duration: widget.duration,
             curve: visible ? Curves.easeOutCubic : Curves.easeInCubic,
             child: AnimatedOpacity(
               opacity: visible ? 1 : 0,
               duration: widget.duration,
               onEnd: () {
-                if (!widget.visible && mounted) {
+                // With no duration this fires mid-build, after
+                // didUpdateWidget already went offstage.
+                if (!widget.visible && !_offstage && mounted) {
                   setState(() => _offstage = true);
                 }
               },
@@ -286,6 +383,7 @@ class _SlideFadeState extends State<_SlideFade> {
   }
 }
 
+/// Fades the chrome out of the way, for instance while a stroke is drawn.
 class _Fade extends StatelessWidget {
   const _Fade({required this.visible, required this.child});
 
@@ -298,7 +396,9 @@ class _Fade extends StatelessWidget {
       ignoring: !visible,
       child: AnimatedOpacity(
         opacity: visible ? 1 : 0,
-        duration: const Duration(milliseconds: 150),
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 150),
         child: child,
       ),
     );

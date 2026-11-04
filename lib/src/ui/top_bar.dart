@@ -196,13 +196,19 @@ class _PenSwatch extends StatelessWidget {
             dimension: EditorIconButton.hitSize,
             child: Center(
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : const Duration(milliseconds: 150),
                 width: EditorIconButton.backdropSize,
                 height: EditorIconButton.backdropSize,
                 decoration: BoxDecoration(
                   color: color,
                   shape: BoxShape.circle,
                   border: Border.all(color: theme.foregroundColor, width: 1.5),
+                  // Keeps a white swatch readable on a bright photo.
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(color: Color(0x66000000), blurRadius: 4),
+                  ],
                 ),
                 alignment: Alignment.center,
                 child: IconTheme.merge(
@@ -220,7 +226,10 @@ class _PenSwatch extends StatelessWidget {
 
 /// Cross-fades between two groups of top bar buttons: the outgoing group
 /// shrinks into [alignment] while the incoming one grows out of it, sliding
-/// in from [slideFrom].
+/// in from [slideFrom] (mirrored in right-to-left layouts).
+///
+/// The outgoing group can't be tapped or reached by screen readers while it
+/// fades, and it keeps its state until it's gone.
 class _Morph extends StatelessWidget {
   const _Morph({
     required this.alignment,
@@ -237,6 +246,7 @@ class _Morph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final direction = Directionality.of(context);
     return AnimatedSwitcher(
       duration: reduceMotion ? Duration.zero : duration,
       switchInCurve: Curves.easeOutCubic,
@@ -250,12 +260,13 @@ class _Morph extends StatelessWidget {
           opacity: animation,
           child: ScaleTransition(
             scale: Tween<double>(begin: 0.6, end: 1).animate(animation),
-            alignment: alignment.resolve(Directionality.of(context)),
+            alignment: alignment.resolve(direction),
             child: SlideTransition(
               position: Tween<Offset>(
                 begin: slideFrom,
                 end: Offset.zero,
               ).animate(slide),
+              textDirection: direction,
               child: child,
             ),
           ),
@@ -266,13 +277,23 @@ class _Morph extends StatelessWidget {
           clipBehavior: Clip.none,
           alignment: alignment,
           children: <Widget>[
-            // The outgoing group can't be tapped while it fades.
-            for (final child in previous) IgnorePointer(child: child),
-            ?current,
+            for (final child in previous) _interactive(child, enabled: false),
+            if (current != null) _interactive(current, enabled: true),
           ],
         );
       },
       child: child,
+    );
+  }
+
+  /// Wraps a group so it ignores taps and screen readers unless [enabled].
+  /// The wrapper takes the group's key, so a group that starts leaving keeps
+  /// its element (and its ink, scroll position and tooltips) as it fades.
+  static Widget _interactive(Widget child, {required bool enabled}) {
+    return IgnorePointer(
+      key: child.key,
+      ignoring: !enabled,
+      child: ExcludeSemantics(excluding: !enabled, child: child),
     );
   }
 }
