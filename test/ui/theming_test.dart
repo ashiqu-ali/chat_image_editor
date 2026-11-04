@@ -1,4 +1,5 @@
 import 'package:chat_image_editor/chat_image_editor.dart';
+import 'package:chat_image_editor/src/ui/top_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -170,6 +171,102 @@ void main() {
       });
     });
 
+    group('floating controls', () {
+      testWidgets('default to translucent black, so the photo shows through', (
+        tester,
+      ) async {
+        await pumpReadyEditor(
+          tester,
+          captionField: const CaptionFieldConfig(
+            header: Text('Sending to Sam'),
+          ),
+        );
+
+        final theme = scopeOf(tester, find.byTooltip('Send')).theme;
+        expect(theme.toolbarBackgroundColor, const Color(0x8A000000));
+        expect(theme.captionFillColor, const Color(0x8A000000));
+        final field = tester.widget<TextField>(find.byType(TextField));
+        expect(field.decoration?.fillColor, theme.captionFillColor);
+        expect(field.decoration!.fillColor!.a, lessThan(1));
+        expect(
+          _chipColor(tester, 'Sending to Sam'),
+          theme.toolbarBackgroundColor,
+        );
+      });
+
+      testWidgets('the caption fill and header chip follow the theme', (
+        tester,
+      ) async {
+        await pumpReadyEditor(
+          tester,
+          theme: const ChatImageEditorThemeData(
+            captionFillColor: Color(0x66102030),
+            toolbarBackgroundColor: Color(0x80123456),
+          ),
+          captionField: const CaptionFieldConfig(
+            header: Text('Sending to Sam'),
+          ),
+        );
+
+        final field = tester.widget<TextField>(find.byType(TextField));
+        expect(field.decoration?.fillColor, const Color(0x66102030));
+        expect(_chipColor(tester, 'Sending to Sam'), const Color(0x80123456));
+      });
+
+      testWidgets('the selected tool is drawn in activeToolColor, unfilled', (
+        tester,
+      ) async {
+        const active = Color(0xFFFFD180);
+        final controller = await pumpReadyEditor(
+          tester,
+          theme: const ChatImageEditorThemeData(activeToolColor: active),
+        );
+        final theme = scopeOf(tester, find.byTooltip('Send')).theme;
+
+        await tester.tap(find.byTooltip('Image quality'));
+        await tester.pump();
+        expect(controller.activeTool, EditorTool.compress);
+
+        Finder tool(String tooltip) => find.descendant(
+          of: find.byType(EditorTopBar),
+          matching: find.byTooltip(tooltip),
+        );
+        Color? iconColor(Finder button) => IconTheme.of(
+          tester.element(
+            find.descendant(of: button, matching: find.byType(Icon)),
+          ),
+        ).color;
+
+        final selected = tool('Image quality');
+        expect(iconColor(selected), active);
+        expect(iconColor(tool('Draw')), theme.foregroundColor);
+        // The usual backdrop, not a circle filled with the accent.
+        expect(_fillsWith(selected, active), findsNothing);
+        expect(
+          _fillsWith(selected, theme.toolbarBackgroundColor),
+          findsOneWidget,
+        );
+
+        controller.closeTool();
+        await tester.pumpAndSettle();
+      });
+    });
+
+    testWidgets('sendButtonSize sets the send button diameter', (tester) async {
+      await pumpReadyEditor(
+        tester,
+        theme: const ChatImageEditorThemeData(sendButtonSize: 60),
+      );
+
+      final button = find
+          .descendant(
+            of: find.byTooltip('Send'),
+            matching: find.byType(Material),
+          )
+          .first;
+      expect(tester.getSize(button), const Size.square(60));
+    });
+
     testWidgets('a disabled send button uses the disabled color', (
       tester,
     ) async {
@@ -191,4 +288,194 @@ void main() {
       expect(buttonColor(tester, 'Send'), appPrimary);
     });
   });
+
+  group('ChatImageEditorThemeData', () {
+    test('merge, copyWith and lerp carry every field', () {
+      final a = _fullTheme(1);
+      final b = _fullTheme(2);
+      const empty = ChatImageEditorThemeData();
+
+      expect(_fields(empty), everyElement(isNull));
+      expect(_fields(empty.merge(a)), _fields(a));
+      expect(_fields(a.merge(b)), _fields(b));
+      expect(_fields(a.merge(empty)), _fields(a));
+      expect(_fields(a.merge(null)), _fields(a));
+      expect(_fields(a.copyWith()), _fields(a));
+      expect(_fields(a.lerp(b, 0)), _fields(a));
+      expect(_fields(a.lerp(b, 1)), _fields(b));
+    });
+
+    testWidgets('resolve takes every field from the override', (tester) async {
+      final override = _fullTheme(1);
+      late ChatImageEditorResolvedTheme resolved;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              resolved = ChatImageEditorThemeData.resolve(context, override);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+
+      // Text styles are merged onto the themed defaults, so compare the
+      // size each override sets.
+      final expected = _fields(
+        override,
+      ).map((value) => value is TextStyle ? value.fontSize : value).toList();
+      expect(_resolvedFields(resolved), expected);
+    });
+  });
 }
+
+/// Background color of the header chip around [label].
+Color? _chipColor(WidgetTester tester, String label) {
+  final chip = tester.widget<DecoratedBox>(
+    find
+        .ancestor(of: find.text(label), matching: find.byType(DecoratedBox))
+        .first,
+  );
+  return (chip.decoration as BoxDecoration).color;
+}
+
+/// Boxes and materials under [finder] filled with [color].
+Finder _fillsWith(Finder finder, Color color) {
+  return find.descendant(
+    of: finder,
+    matching: find.byWidgetPredicate((widget) {
+      if (widget is Material) return widget.color == color;
+      if (widget is DecoratedBox) {
+        final decoration = widget.decoration;
+        return decoration is BoxDecoration && decoration.color == color;
+      }
+      return false;
+    }),
+  );
+}
+
+/// A theme with every field set to a value unique to [seed].
+ChatImageEditorThemeData _fullTheme(int seed) {
+  Color c(int index) => Color(0xFF000000 + seed * 0x10000 + index);
+  return ChatImageEditorThemeData(
+    primaryColor: c(1),
+    onPrimaryColor: c(2),
+    backgroundColor: c(3),
+    foregroundColor: c(4),
+    toolbarBackgroundColor: c(5),
+    activeToolColor: c(6),
+    scrimColor: c(7),
+    cropFrameColor: c(8),
+    cropHandleColor: c(9),
+    cropGridColor: c(10),
+    cropOverlayColor: c(11),
+    sliderActiveColor: c(12),
+    sliderInactiveColor: c(13),
+    sliderThumbColor: c(14),
+    deleteTargetColor: c(15),
+    deleteTargetActiveColor: c(16),
+    guideLineColor: c(17),
+    captionFillColor: c(18),
+    captionTextColor: c(19),
+    captionHintColor: c(20),
+    sendButtonColor: c(21),
+    sendButtonForegroundColor: c(22),
+    sendButtonDisabledColor: c(23),
+    sheetBackgroundColor: c(24),
+    sheetForegroundColor: c(25),
+    defaultDrawColor: c(26),
+    defaultTextColor: c(27),
+    loadingIndicatorColor: c(28),
+    palette: <Color>[c(29), c(30)],
+    labelStyle: TextStyle(fontSize: 10.0 + seed),
+    captionStyle: TextStyle(fontSize: 12.0 + seed),
+    sheetTitleStyle: TextStyle(fontSize: 14.0 + seed),
+    sheetBodyStyle: TextStyle(fontSize: 16.0 + seed),
+    textLayerStyle: TextStyle(fontSize: 18.0 + seed),
+    iconSize: 20.0 + seed,
+    captionBorderRadius: BorderRadius.circular(4.0 + seed),
+    sendButtonSize: 40.0 + seed,
+  );
+}
+
+/// Every field of [t], in declaration order.
+List<Object?> _fields(ChatImageEditorThemeData t) => <Object?>[
+  t.primaryColor,
+  t.onPrimaryColor,
+  t.backgroundColor,
+  t.foregroundColor,
+  t.toolbarBackgroundColor,
+  t.activeToolColor,
+  t.scrimColor,
+  t.cropFrameColor,
+  t.cropHandleColor,
+  t.cropGridColor,
+  t.cropOverlayColor,
+  t.sliderActiveColor,
+  t.sliderInactiveColor,
+  t.sliderThumbColor,
+  t.deleteTargetColor,
+  t.deleteTargetActiveColor,
+  t.guideLineColor,
+  t.captionFillColor,
+  t.captionTextColor,
+  t.captionHintColor,
+  t.sendButtonColor,
+  t.sendButtonForegroundColor,
+  t.sendButtonDisabledColor,
+  t.sheetBackgroundColor,
+  t.sheetForegroundColor,
+  t.defaultDrawColor,
+  t.defaultTextColor,
+  t.loadingIndicatorColor,
+  t.palette,
+  t.labelStyle,
+  t.captionStyle,
+  t.sheetTitleStyle,
+  t.sheetBodyStyle,
+  t.textLayerStyle,
+  t.iconSize,
+  t.captionBorderRadius,
+  t.sendButtonSize,
+];
+
+/// The fields of [t] in the order of [_fields], text styles as font sizes.
+List<Object?> _resolvedFields(ChatImageEditorResolvedTheme t) => <Object?>[
+  t.primaryColor,
+  t.onPrimaryColor,
+  t.backgroundColor,
+  t.foregroundColor,
+  t.toolbarBackgroundColor,
+  t.activeToolColor,
+  t.scrimColor,
+  t.cropFrameColor,
+  t.cropHandleColor,
+  t.cropGridColor,
+  t.cropOverlayColor,
+  t.sliderActiveColor,
+  t.sliderInactiveColor,
+  t.sliderThumbColor,
+  t.deleteTargetColor,
+  t.deleteTargetActiveColor,
+  t.guideLineColor,
+  t.captionFillColor,
+  t.captionTextColor,
+  t.captionHintColor,
+  t.sendButtonColor,
+  t.sendButtonForegroundColor,
+  t.sendButtonDisabledColor,
+  t.sheetBackgroundColor,
+  t.sheetForegroundColor,
+  t.defaultDrawColor,
+  t.defaultTextColor,
+  t.loadingIndicatorColor,
+  t.palette,
+  t.labelStyle.fontSize,
+  t.captionStyle.fontSize,
+  t.sheetTitleStyle.fontSize,
+  t.sheetBodyStyle.fontSize,
+  t.textLayerStyle.fontSize,
+  t.iconSize,
+  t.captionBorderRadius,
+  t.sendButtonSize,
+];
